@@ -52,21 +52,21 @@ export default function LockScreen({ onUnlock }: { onUnlock: () => void }) {
       exit={{ y: '-100%', transition: { duration: 0.8, ease: [0.76, 0, 0.24, 1] } }}
       transition={{ duration: 0.5 }}
       onClick={unlock}
-      className="fixed inset-0 z-[10000] cursor-pointer select-none overflow-hidden"
+      className="scrollbar-none fixed inset-0 z-[10000] cursor-pointer select-none overflow-y-auto overflow-x-hidden overscroll-contain"
     >
       {/* Veil: dims the wallpaper and pools warm light behind the clock */}
       <div
         aria-hidden
-        className="absolute inset-0"
+        className="fixed inset-0"
         style={{
           background:
             'radial-gradient(60% 55% at 28% 48%, rgb(var(--accent) / 0.11), transparent 70%), linear-gradient(180deg, rgb(var(--base) / 0.55), rgb(var(--base) / 0.78))',
         }}
       />
       {/* Accent edge that trails the screen as it slides away */}
-      <span aria-hidden className="absolute inset-x-0 bottom-0 h-[2px] bg-accent shadow-[0_0_24px_rgb(var(--accent))]" />
+      <span aria-hidden className="fixed inset-x-0 bottom-0 z-10 h-[2px] bg-accent shadow-[0_0_24px_rgb(var(--accent))]" />
 
-      <div className="relative flex h-full flex-col">
+      <div className="relative flex min-h-full flex-col">
         {/* Top rail */}
         <motion.header
           initial={{ opacity: 0, y: -12 }}
@@ -90,7 +90,7 @@ export default function LockScreen({ onUnlock }: { onUnlock: () => void }) {
         </motion.header>
 
         {/* Stage */}
-        <div className="mx-auto grid w-full max-w-[1280px] flex-1 items-center gap-10 px-6 py-8 sm:px-10 lg:grid-cols-12">
+        <div className="mx-auto grid w-full max-w-[1280px] flex-1 items-center gap-6 px-5 py-5 sm:gap-10 sm:px-10 sm:py-8 lg:grid-cols-12">
           {/* Clock */}
           <div className="lg:col-span-7">
             <motion.p
@@ -108,7 +108,7 @@ export default function LockScreen({ onUnlock }: { onUnlock: () => void }) {
 
             <h1
               className="display mt-3 flex items-baseline leading-[0.8] text-ink tabular-nums"
-              style={{ fontSize: 'clamp(120px, 19vw, 300px)' }}
+              style={{ fontSize: 'clamp(92px, max(19vw, 14svh), 300px)' }}
               aria-label={`${hh}:${mm}`}
               suppressHydrationWarning
             >
@@ -132,7 +132,7 @@ export default function LockScreen({ onUnlock }: { onUnlock: () => void }) {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4, ease: EASE }}
-              className="display mt-5 text-[clamp(26px,3vw,40px)] leading-none text-ink-muted"
+              className="display mt-3 text-[clamp(22px,3vw,40px)] sm:mt-5 leading-none text-ink-muted"
               suppressHydrationWarning
             >
               <span className="italic text-ink">{weekday}</span>
@@ -147,7 +147,7 @@ export default function LockScreen({ onUnlock }: { onUnlock: () => void }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.9, delay: 0.3, ease: EASE }}
             onClick={(e) => e.stopPropagation()}
-            className="relative cursor-default rounded-win bg-surface/90 p-6 backdrop-blur-md lg:col-span-5 lg:justify-self-end lg:w-full lg:max-w-[440px] sm:p-7"
+            className="relative cursor-default rounded-win bg-surface/90 p-5 backdrop-blur-md lg:col-span-5 lg:justify-self-end lg:w-full lg:max-w-[440px] sm:p-7"
             style={{ boxShadow: 'inset 0 0 0 1px rgb(var(--ink) / 0.12), 0 50px 120px -30px rgb(0 0 0 / 0.9)' }}
           >
             {/* Corner registration marks */}
@@ -177,12 +177,12 @@ export default function LockScreen({ onUnlock }: { onUnlock: () => void }) {
             </div>
 
             {/* boot.log */}
-            <div className="mt-6 overflow-hidden rounded-card bg-surface-sunken shadow-[inset_0_0_0_1px_rgb(var(--ink)/0.08)]">
+            <div className="mt-5 overflow-hidden rounded-card bg-surface-sunken sm:mt-6 shadow-[inset_0_0_0_1px_rgb(var(--ink)/0.08)]">
               <div className="flex items-center justify-between border-b border-line px-3.5 py-2 font-mono text-[10px] uppercase tracking-[0.16em] text-ink-faint">
                 <span>boot.log</span>
                 <span className="text-accent">{APPS.length} apps</span>
               </div>
-              <ol className="space-y-1 px-3.5 py-3 font-mono text-[11px] text-ink-faint" aria-hidden>
+              <ol className="hidden space-y-1 px-3.5 py-3 font-mono text-[11px] text-ink-faint sm:block" aria-hidden>
                 {BOOT.map((line, i) => (
                   <motion.li
                     key={line}
@@ -207,7 +207,7 @@ export default function LockScreen({ onUnlock }: { onUnlock: () => void }) {
               </div>
             </div>
 
-            <button type="button" onClick={unlock} className="btn-primary group mt-6 w-full !justify-between !px-5 !py-4 text-[14px]">
+            <button type="button" onClick={unlock} className="btn-primary group mt-5 w-full !justify-between sm:mt-6 !px-5 !py-4 text-[14px]">
               <AnimatePresence mode="wait" initial={false}>
                 {unlocking ? (
                   <motion.span key="s" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2">
@@ -224,7 +224,7 @@ export default function LockScreen({ onUnlock }: { onUnlock: () => void }) {
                 <ArrowRight size={15} weight="bold" />
               </span>
             </button>
-            <p className="mt-3 flex items-center justify-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-ink-faint">
+            <p className="mt-3 flex items-center justify-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-ink-faint [@media(hover:none)]:hidden">
               or press <kbd>any key</kbd>
             </p>
           </motion.section>
@@ -235,7 +235,7 @@ export default function LockScreen({ onUnlock }: { onUnlock: () => void }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1, delay: 0.8 }}
-          className="relative overflow-hidden border-t border-line py-3.5 [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]"
+          className="relative overflow-hidden border-t border-line py-3.5 pb-[max(14px,env(safe-area-inset-bottom))] [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]"
           aria-hidden
         >
           <div className="flex w-max animate-marquee motion-reduce:animate-none">
