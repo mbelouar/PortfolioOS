@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { AnimatePresence, MotionConfig, motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'framer-motion';
+import { IconContext } from '@phosphor-icons/react';
+import { useRipples } from '@/components/ui/Ripple';
 import { APP_MAP } from '@/components/apps/registry';
 import { useCoarsePointer, useIsMac, useIsMobile, useViewport } from '@/lib/hooks';
 import Backdrop from './Backdrop';
@@ -46,13 +48,17 @@ export default function Desktop() {
     setLocked(false);
   }, []);
 
+  useRipples();
+
   return (
     <MotionConfig reducedMotion="user">
-      <OSProvider onLock={lock}>
-        <Wallpaper />
-        {locked === false && <Shell />}
-        <AnimatePresence>{locked && <LockScreen onUnlock={unlock} />}</AnimatePresence>
-      </OSProvider>
+      <IconContext.Provider value={{ weight: 'regular', size: 16, mirrored: false }}>
+        <OSProvider onLock={lock}>
+          <Wallpaper />
+          {locked === false && <Shell />}
+          <AnimatePresence>{locked && <LockScreen onUnlock={unlock} />}</AnimatePresence>
+        </OSProvider>
+      </IconContext.Provider>
     </MotionConfig>
   );
 }
@@ -64,8 +70,8 @@ function Wallpaper() {
   const my = useMotionValue(0);
   const sx = useSpring(mx, { stiffness: 40, damping: 20 });
   const sy = useSpring(my, { stiffness: 40, damping: 20 });
-  const x = useTransform(sx, (v) => v * -14);
-  const y = useTransform(sy, (v) => v * -10);
+  const x = useTransform(sx, (v) => v * -18);
+  const y = useTransform(sy, (v) => v * -12);
 
   useEffect(() => {
     if (coarse || reduced) return;
@@ -78,10 +84,25 @@ function Wallpaper() {
   }, [coarse, reduced, mx, my]);
 
   return (
-    <div aria-hidden className="fixed inset-0 overflow-hidden bg-[#07080f]">
-      <motion.div className="absolute -inset-6" style={{ x, y }}>
+    <div aria-hidden className="fixed inset-0 overflow-hidden bg-base">
+      <motion.div className="absolute -inset-8" style={{ x, y }}>
         <Backdrop />
       </motion.div>
+      <RegistrationMarks />
+    </div>
+  );
+}
+
+/** Print-style crop marks and coordinates framing the desktop. */
+function RegistrationMarks() {
+  const mark = 'absolute h-5 w-5 border-ink/25';
+  return (
+    <div className="pointer-events-none absolute inset-0 hidden md:block">
+      <span className={`${mark} left-[calc(var(--rail-w)+16px)] top-[calc(var(--bar-h)+16px)] border-l border-t`} />
+      <span className={`${mark} right-4 top-[calc(var(--bar-h)+16px)] border-r border-t`} />
+      <span className={`${mark} bottom-4 left-[calc(var(--rail-w)+16px)] border-b border-l`} />
+      <span className={`${mark} bottom-4 right-4 border-b border-r`} />
+      <span className="absolute right-11 top-[calc(var(--bar-h)+18px)] font-mono text-[10px] tracking-[0.2em] text-ink/30">33.57°N 7.59°W</span>
     </div>
   );
 }
@@ -92,9 +113,6 @@ function Shell() {
   const mobile = useIsMobile();
   const mac = useIsMac();
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
-  const [nearBottom, setNearBottom] = useState(false);
-
-  const anyZoomed = os.windows.some((w) => w.maximized && !w.minimized);
 
   // Welcome notification (once per session).
   useEffect(() => {
@@ -108,22 +126,14 @@ function Shell() {
     const t = window.setTimeout(
       () =>
         os.notify({
-          title: 'Welcome 👋',
-          body: `Press ${mac ? '⌘K' : 'Ctrl+K'} to search anything, or open an app from the Dock.`,
+          title: 'Welcome aboard',
+          body: `Press ${mac ? '⌘K' : 'Ctrl+K'} to search anything, or pick an app from the launcher.`,
         }),
       900,
     );
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Reveal the dock when the pointer reaches the bottom edge while a window is zoomed.
-  useEffect(() => {
-    if (!anyZoomed || mobile) return;
-    const onMove = (e: PointerEvent) => setNearBottom(e.clientY > window.innerHeight - 90);
-    window.addEventListener('pointermove', onMove, { passive: true });
-    return () => window.removeEventListener('pointermove', onMove);
-  }, [anyZoomed, mobile]);
 
   // Global keyboard shortcuts.
   useEffect(() => {
@@ -191,7 +201,7 @@ function Shell() {
         </AnimatePresence>
       )}
 
-      <Dock hidden={!mobile && anyZoomed && !nearBottom} mobile={mobile} />
+      <Dock mobile={mobile} />
       <Toasts />
       <Spotlight />
       <ShortcutsSheet open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />

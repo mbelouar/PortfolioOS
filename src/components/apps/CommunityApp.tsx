@@ -1,48 +1,24 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ArrowUpRight, HeartHandshake, MonitorSmartphone, Trophy, type LucideIcon } from 'lucide-react';
+import { useContext } from 'react';
+import { ArrowUpRight, DeviceMobile, HandHeart, Trophy, type Icon } from '@phosphor-icons/react';
 import { useOS } from '@/components/os/OSContext';
-import { AppHeader, SectionTitle } from '@/components/ui/Section';
+import { AppHeader, Reveal, ScrollRootContext, SectionTitle } from '@/components/ui/Section';
 import { communityContext, volunteering, type Volunteering } from '@/data/portfolio';
-import { trackPointer } from '@/lib/hooks';
 
-const EASE = [0.32, 0.72, 0, 1] as const;
+const EASE = [0.22, 1, 0.36, 1] as const;
 
-/**
- * Per-role visual identity keyed by volunteering id, taken from each organization's logo:
- * banner = card header, bar = timeline ribbon (kept bright enough to read on the dark UI).
- */
+/** Per-role glyph and short label, keyed by volunteering id. */
 interface RoleStyle {
-  icon: LucideIcon;
-  banner: [string, string];
-  bar: [string, string];
-  barText: string;
+  icon: Icon;
   short: string;
 }
 const STYLE: Record<string, RoleStyle> = {
-  'sports-club': {
-    icon: Trophy,
-    banner: ['#2e2e34', '#050506'],
-    bar: ['#ffffff', '#9b9ba5'],
-    barText: 'text-black/75',
-    short: '1337 MED Sports Club',
-  },
-  ecdh: {
-    icon: MonitorSmartphone,
-    banner: ['#a5cd5a', '#21351f'],
-    bar: ['#c4e483', '#5f9a3c'],
-    barText: 'text-[#13240f]/80',
-    short: 'ECDH',
-  },
+  'sports-club': { icon: Trophy, short: '1337 MED Sports Club' },
+  ecdh: { icon: DeviceMobile, short: 'ECDH' },
 };
-const FALLBACK: RoleStyle = {
-  icon: HeartHandshake,
-  banner: ['#ff9f6b', '#f0503c'],
-  bar: ['#ff9f6b', '#f0503c'],
-  barText: 'text-black/70',
-  short: '',
-};
+const FALLBACK: RoleStyle = { icon: HandHeart, short: '' };
 
 const monthIndex = (ym: string) => {
   const [y, m] = ym.split('-').map(Number);
@@ -69,30 +45,33 @@ export default function CommunityApp() {
   return (
     <div className="mx-auto max-w-3xl">
       <AppHeader
+        index="05"
         eyebrow="Beyond the code"
         title="Community"
         subtitle="Volunteering and student life — where I learned to lead people, organize events and keep things running for others."
       />
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 border-y border-line">
         {stats.map((s, i) => (
           <motion.div
             key={s.label}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: i * 0.06, ease: EASE }}
-            className="card p-4"
+            transition={{ duration: 0.6, delay: 0.2 + i * 0.08, ease: EASE }}
+            className={`px-4 py-5 ${i ? 'border-l border-line' : ''}`}
           >
-            <p className="text-3xl font-semibold tabular-nums tracking-tight">{s.value}</p>
-            <p className="mt-1 text-xs text-ink-faint">{s.label}</p>
+            <p className="display text-[44px] leading-none tabular-nums">{String(s.value).padStart(2, '0')}</p>
+            <p className="mt-2 font-mono text-[10.5px] uppercase tracking-[0.14em] text-ink-faint">{s.label}</p>
           </motion.div>
         ))}
       </div>
 
-      <SectionTitle>Timeline</SectionTitle>
-      <Ribbon />
+      <Reveal as="section">
+        <SectionTitle index="A">Timeline</SectionTitle>
+        <Ribbon />
+      </Reveal>
 
-      <SectionTitle>Roles</SectionTitle>
+      <SectionTitle index="B">Roles</SectionTitle>
       <div className="grid gap-4 sm:grid-cols-2">
         {volunteering.map((v, i) => (
           <RoleCard key={v.id} v={v} index={i} />
@@ -105,6 +84,7 @@ export default function CommunityApp() {
 /** Gantt-style ribbon showing how commitments overlapped over the years. */
 function Ribbon() {
   const { open } = useOS();
+  const root = useContext(ScrollRootContext);
   const rows = [
     ...volunteering.map((v) => ({ id: v.id, label: STYLE[v.id]?.short || v.org, start: v.start, end: v.end, context: false, logo: v.logo, logoBg: v.logoBg })),
     ...communityContext.map((c) => ({ ...c, context: true })),
@@ -117,14 +97,14 @@ function Ribbon() {
   const years = Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i);
 
   return (
-    <div className="card overflow-hidden p-4 sm:p-5">
+    <div className="card overflow-hidden p-5 sm:p-6">
       <div className="relative">
         {/* Year gridlines */}
         <div className="pointer-events-none absolute inset-0 ml-[38%] sm:ml-[30%]">
           {years.map((y, i) => (
             <div
               key={y}
-              className="absolute bottom-0 top-0 border-l border-dashed border-white/[0.07]"
+              className="absolute bottom-0 top-0 border-l border-dashed border-ink/10"
               style={{ left: `${(i / (years.length - 1)) * 100}%` }}
             />
           ))}
@@ -132,7 +112,6 @@ function Ribbon() {
 
         <div className="relative space-y-3">
           {rows.map((r, i) => {
-            const s = STYLE[r.id] ?? FALLBACK;
             const left = ((monthIndex(r.start) - startYear * 12) / span) * 100;
             const width = ((monthIndex(r.end) - monthIndex(r.start) + 1) / span) * 100;
             return (
@@ -148,7 +127,7 @@ function Ribbon() {
                         <img src={r.logo} alt="" className="h-5 w-5 shrink-0 rounded-md object-contain ring-1 ring-white/10" style={{ background: r.logoBg }} />
                       )}
                       <span className="truncate">{r.label}</span>
-                      <ArrowUpRight className="h-3 w-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
+                      <ArrowUpRight size={12} className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
                     </button>
                   ) : (
                     <p className="flex items-center gap-2 text-xs font-medium text-ink">
@@ -163,20 +142,16 @@ function Ribbon() {
                 <div className="relative h-6 flex-1">
                   <motion.div
                     initial={{ scaleX: 0 }}
-                    animate={{ scaleX: 1 }}
+                    whileInView={{ scaleX: 1 }}
+                    viewport={{ once: true, root: root ?? undefined }}
                     transition={{ duration: 0.9, delay: 0.15 + i * 0.12, ease: EASE }}
                     title={`${fmtMonth(r.start)} — ${fmtMonth(r.end)}`}
-                    className={`absolute inset-y-0 origin-left rounded-full ${r.context ? 'border border-dashed border-white/20 bg-white/[0.04]' : ''}`}
-                    style={{
-                      left: `${left}%`,
-                      width: `${width}%`,
-                      background: r.context ? undefined : `linear-gradient(90deg, ${s.bar[0]}, ${s.bar[1]})`,
-                      boxShadow: r.context ? undefined : `0 6px 18px -6px ${s.bar[1]}99`,
-                    }}
+                    className={`absolute inset-y-0 origin-left rounded-[3px] ${r.context ? 'border border-dashed border-ink/25' : 'bg-accent'}`}
+                    style={{ left: `${left}%`, width: `${width}%` }}
                   />
                   <span
-                    className={`absolute inset-y-0 flex items-center px-2.5 text-[10px] font-semibold ${
-                      r.context ? 'text-ink-faint' : s.barText
+                    className={`absolute inset-y-0 flex items-center px-2.5 font-mono text-[10px] ${
+                      r.context ? 'text-ink-faint' : 'text-[#170a03]'
                     }`}
                     style={{ left: `${left}%` }}
                   >
@@ -211,51 +186,36 @@ function RoleCard({ v, index }: { v: Volunteering; index: number }) {
   const months = monthsBetween(v.start, v.end);
 
   return (
-    <motion.article
-      initial={{ opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.2 + index * 0.08, ease: EASE }}
-      onPointerMove={trackPointer}
-      className="card spotlight group flex flex-col overflow-hidden"
-    >
-      {/* Gradient banner with the duration as a big numeral */}
-      <div
-        className="relative flex h-28 items-end justify-between overflow-hidden p-4"
-        style={{ background: `linear-gradient(135deg, ${s.banner[0]}, ${s.banner[1]})` }}
-      >
-        <Icon
-          aria-hidden
-          className="absolute -right-4 -top-4 h-32 w-32 text-white/15 transition-transform duration-700 ease-mac group-hover:rotate-6 group-hover:scale-110"
-          strokeWidth={1.25}
-        />
+    <Reveal as="article" delay={index * 0.08} className="card card-hover ticks group flex flex-col p-6">
+      <div className="flex items-start justify-between">
         <span
-          className="relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl p-1.5 shadow-[0_10px_24px_-8px_rgb(0_0_0/0.7)] ring-1 ring-white/20 transition-transform duration-500 ease-mac group-hover:-rotate-3 group-hover:scale-105"
+          className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-ctl p-1.5 ring-1 ring-line-strong transition-transform duration-500 ease-spring group-hover:-rotate-3 group-hover:scale-110"
           style={{ background: v.logoBg }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={v.logo} alt={`${v.org} logo`} className="h-full w-full object-contain" />
         </span>
-        <span className="relative text-right text-white">
-          <span className="block text-3xl font-semibold leading-none tracking-tight drop-shadow-sm">{fmtDuration(months)}</span>
-          <span className="mt-1 block text-[10px] font-semibold uppercase tracking-wider text-white/80">{v.cause}</span>
+        <span className="text-right">
+          <span className="display block text-[40px] leading-none text-accent">{fmtDuration(months)}</span>
+          <span className="mt-1 flex items-center justify-end gap-1 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">
+            <Icon size={12} /> {v.cause}
+          </span>
         </span>
       </div>
 
-      <div className="flex flex-1 flex-col p-5">
-        <h3 className="text-[17px] font-semibold tracking-tight">{v.role}</h3>
-        <p className="text-sm text-ink-muted">{v.org}</p>
-        <p className="mt-1 font-mono text-[11px] text-accent/90">
-          {fmtMonth(v.start)} — {fmtMonth(v.end)}
-        </p>
-        <p className="mt-3 text-[13.5px] leading-relaxed text-ink-muted">{v.description}</p>
-        <div className="mt-auto flex flex-wrap gap-1.5 pt-4">
-          {v.highlights.map((h) => (
-            <span key={h} className="chip">
-              {h}
-            </span>
-          ))}
-        </div>
+      <h3 className="display mt-6 text-[28px] leading-[1.05]">{v.role}</h3>
+      <p className="mt-1 text-[13.5px] text-ink-muted">{v.org}</p>
+      <p className="mt-1 font-mono text-[10.5px] uppercase tracking-[0.12em] text-ink-faint">
+        {fmtMonth(v.start)} — {fmtMonth(v.end)}
+      </p>
+      <p className="mt-4 text-[13.5px] leading-[1.7] text-ink-muted">{v.description}</p>
+      <div className="mt-auto flex flex-wrap gap-1.5 pt-5">
+        {v.highlights.map((h) => (
+          <span key={h} className="chip">
+            {h}
+          </span>
+        ))}
       </div>
-    </motion.article>
+    </Reveal>
   );
 }

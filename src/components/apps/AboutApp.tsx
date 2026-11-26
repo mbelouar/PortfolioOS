@@ -1,16 +1,13 @@
 'use client';
 
-import { motion, type Variants } from 'framer-motion';
-import { ArrowUpRight, FileText, GraduationCap, Mail, MapPin } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ArrowUpRight, EnvelopeSimple, FileText, GraduationCap, MapPin } from '@phosphor-icons/react';
 import { useOS } from '@/components/os/OSContext';
 import { GithubIcon, LinkedinIcon } from '@/components/ui/BrandIcons';
-import { SectionTitle } from '@/components/ui/Section';
+import { Reveal, SectionTitle } from '@/components/ui/Section';
 import { certifications, education, experiences, profile, projects, spokenLanguages } from '@/data/portfolio';
 
-const rise: Variants = {
-  hidden: { opacity: 0, y: 12 },
-  show: (i: number) => ({ opacity: 1, y: 0, transition: { delay: 0.05 * i, duration: 0.5, ease: [0.32, 0.72, 0, 1] as const } }),
-};
+const EASE = [0.22, 1, 0.36, 1] as const;
 
 export default function AboutApp() {
   const { open } = useOS();
@@ -18,149 +15,172 @@ export default function AboutApp() {
   const stats = [
     { value: projects.length, label: 'Projects', app: 'projects' as const },
     { value: certifications.length, label: 'Certifications', app: 'certifications' as const },
-    { value: experiences.length, label: 'Experiences', app: 'experience' as const },
+    { value: experiences.length, label: 'Roles', app: 'experience' as const },
   ];
 
   return (
-    <div className="mx-auto max-w-3xl">
-      {/* Hero */}
-      <motion.section
-        initial="hidden"
-        animate="show"
-        custom={0}
-        variants={rise}
-        className="relative overflow-hidden rounded-3xl p-6 shadow-card sm:p-8"
-        style={{
-          background:
-            'radial-gradient(120% 120% at 100% 0%, rgb(138 180 255 / 0.16), transparent 50%), radial-gradient(90% 90% at 0% 100%, rgb(255 255 255 / 0.06), transparent 60%), rgb(255 255 255 / 0.03)',
-        }}
-      >
-        <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center">
-          <div className="relative">
-            <div className="h-28 w-28 overflow-hidden rounded-[28px] shadow-[0_20px_40px_-12px_rgb(0_0_0/0.7)] ring-1 ring-white/15 sm:h-32 sm:w-32">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={profile.photo}
-                alt={profile.name}
-                width={256}
-                height={256}
-                className="h-full w-full object-cover"
-              />
-            </div>
-            <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-[#16161a] ring-1 ring-white/10">
-              <span className="h-2.5 w-2.5 rounded-full bg-ok shadow-[0_0_10px_rgb(52_211_153/0.9)]" />
-            </span>
+    <div className="mx-auto max-w-4xl">
+      {/* Hero: portrait plate + editorial name */}
+      <section className="grid gap-8 sm:grid-cols-[220px_1fr] sm:gap-10">
+        <motion.figure
+          initial={{ opacity: 0, clipPath: 'inset(100% 0 0 0)' }}
+          animate={{ opacity: 1, clipPath: 'inset(0% 0 0 0)' }}
+          transition={{ duration: 1, ease: EASE }}
+          className="relative w-44 sm:w-full"
+        >
+          <div className="aspect-[4/5] overflow-hidden rounded-card ring-1 ring-line-strong">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={profile.photo} alt={profile.name} width={440} height={550} className="h-full w-full object-cover grayscale-[25%]" />
           </div>
-
-          <div className="min-w-0 flex-1">
-            <span className="mb-3 inline-flex items-center gap-2 rounded-full bg-ok/10 px-2.5 py-1 text-[11px] font-medium text-ok ring-1 ring-ok/20">
-              <span className="h-1.5 w-1.5 animate-breathe rounded-full bg-ok" />
-              {profile.availability}
+          <figcaption className="mt-2 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.16em] text-ink-faint">
+            <span>Fig. 01</span>
+            <span className="flex items-center gap-1">
+              <MapPin size={11} weight="bold" /> {profile.location.split(',')[0]}
             </span>
-            <h1 className="text-gradient text-3xl font-semibold tracking-tight sm:text-[40px] sm:leading-[1.1]">
-              {profile.name}
-            </h1>
-            <p className="mt-1.5 text-[15px] text-ink-muted">{profile.headline}</p>
-            <p className="mt-2 flex items-center gap-1.5 text-xs text-ink-faint">
-              <MapPin className="h-3.5 w-3.5" />
-              {profile.location}
-            </p>
-          </div>
-        </div>
+          </figcaption>
+        </motion.figure>
 
-        <div className="mt-6 flex flex-wrap items-center gap-2">
-          <button className="btn-primary" onClick={() => open('resume')}>
-            <FileText className="h-4 w-4" />
-            View résumé
-          </button>
-          <button className="btn-secondary" onClick={() => open('contact')}>
-            <Mail className="h-4 w-4" />
-            Get in touch
-          </button>
-          <div className="ml-auto flex gap-2">
+        <div className="min-w-0">
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.18em] text-ok"
+          >
+            <span className="h-1.5 w-1.5 animate-pulse2 rounded-full bg-ok" />
+            {profile.availability}
+          </motion.p>
+          <h1 className="display mt-4 text-[48px] leading-[0.92] sm:text-[68px]">
+            {profile.name.split(' ').map((w, i) => (
+              <span key={w} className="block overflow-hidden">
+                <motion.span
+                  className={`inline-block ${i ? 'italic' : ''}`}
+                  initial={{ y: '105%' }}
+                  animate={{ y: 0 }}
+                  transition={{ duration: 0.9, delay: 0.1 + i * 0.1, ease: EASE }}
+                >
+                  {w}
+                  {i === profile.name.split(' ').length - 1 && <span className="not-italic text-accent">.</span>}
+                </motion.span>
+              </span>
+            ))}
+          </h1>
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.35, ease: EASE }}
+            className="mt-5 text-[16px] leading-relaxed text-ink-muted"
+          >
+            {profile.headline}
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.45, ease: EASE }}
+            className="mt-7 flex flex-wrap items-center gap-2"
+          >
+            <button className="btn-primary" onClick={() => open('resume')}>
+              <FileText size={16} weight="bold" />
+              View résumé
+            </button>
+            <button className="btn-secondary" onClick={() => open('contact')}>
+              <EnvelopeSimple size={16} />
+              Get in touch
+            </button>
             <a className="btn-icon" href={profile.github} target="_blank" rel="noopener noreferrer" aria-label="GitHub">
-              <GithubIcon className="h-[18px] w-[18px]" />
+              <GithubIcon size={18} />
             </a>
             <a className="btn-icon" href={profile.linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
-              <LinkedinIcon className="h-[17px] w-[17px]" />
+              <LinkedinIcon size={18} />
             </a>
-          </div>
+          </motion.div>
         </div>
-      </motion.section>
+      </section>
 
-      {/* Stats */}
-      <motion.div initial="hidden" animate="show" custom={1} variants={rise} className="mt-4 grid grid-cols-3 gap-3">
-        {stats.map((s) => (
+      {/* Stats strip */}
+      <Reveal className="mt-12 grid grid-cols-3 border-y border-line">
+        {stats.map((s, i) => (
           <button
             key={s.label}
             onClick={() => open(s.app)}
-            className="card card-hover group p-4 text-left"
+            className={`press ripple-host group flex items-end justify-between px-4 py-5 text-left transition-colors hover:bg-white/[0.03] ${i ? 'border-l border-line' : ''}`}
           >
-            <div className="flex items-start justify-between">
-              <span className="text-3xl font-semibold tracking-tight tabular-nums">{s.value}</span>
-              <ArrowUpRight className="h-4 w-4 text-ink-faint opacity-0 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:opacity-100" />
-            </div>
-            <span className="mt-1 block text-xs text-ink-faint">{s.label}</span>
+            <span>
+              <span className="display block text-[44px] leading-none tabular-nums transition-colors group-hover:text-accent">
+                {String(s.value).padStart(2, '0')}
+              </span>
+              <span className="mt-2 block font-mono text-[10.5px] uppercase tracking-[0.16em] text-ink-faint">{s.label}</span>
+            </span>
+            <ArrowUpRight size={16} className="text-ink-faint transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-accent" />
           </button>
         ))}
-      </motion.div>
+      </Reveal>
 
-      {/* Bio */}
-      <motion.section initial="hidden" animate="show" custom={2} variants={rise}>
-        <SectionTitle>Profile</SectionTitle>
-        <div className="card space-y-3 p-5 text-[14px] leading-relaxed text-ink-muted">
-          <p className="text-ink">{profile.tagline}</p>
-          {profile.bio.map((p) => (
-            <p key={p}>{p}</p>
-          ))}
-          <div className="flex flex-wrap gap-1.5 pt-1">
-            {profile.focus.map((f) => (
-              <span key={f} className="chip">
-                {f}
-              </span>
+      {/* Profile */}
+      <Reveal as="section">
+        <SectionTitle index="A">Profile</SectionTitle>
+        <div className="grid gap-8 sm:grid-cols-[1fr_200px]">
+          <div className="space-y-4 text-[15px] leading-[1.75] text-ink-muted">
+            <p className="display text-[26px] leading-snug text-ink">{profile.tagline}</p>
+            {profile.bio.map((p) => (
+              <p key={p}>{p}</p>
             ))}
           </div>
+          <div>
+            <p className="eyebrow mb-3">Focus</p>
+            <ul className="space-y-2">
+              {profile.focus.map((f, i) => (
+                <li key={f} className="flex items-baseline gap-2 text-[13px] text-ink">
+                  <span className="font-mono text-[10px] text-accent">{String(i + 1).padStart(2, '0')}</span>
+                  {f}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
-      </motion.section>
+      </Reveal>
 
       {/* Education */}
-      <motion.section initial="hidden" animate="show" custom={3} variants={rise}>
-        <SectionTitle aside={<GraduationCap className="h-4 w-4 text-ink-faint" />}>Education</SectionTitle>
+      <Reveal as="section">
+        <SectionTitle index="B" aside={<GraduationCap size={16} className="text-ink-faint" />}>
+          Education
+        </SectionTitle>
         <div className="grid gap-3 sm:grid-cols-2">
-          {education.map((e) => (
-            <div key={e.id} className="card card-hover flex gap-4 p-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white p-1.5">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={e.logo} alt="" className="h-full w-full object-contain" />
+          {education.map((e, i) => (
+            <Reveal key={e.id} delay={i * 0.08}>
+              <div className="card card-hover ticks flex h-full gap-4 p-5">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-ctl bg-white p-1.5">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={e.logo} alt="" className="h-full w-full object-contain" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-accent">{e.period}</p>
+                  <p className="display mt-1 text-[22px] leading-tight">{e.school}</p>
+                  <p className="mt-1 text-[13px] text-ink">{e.program}</p>
+                  <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-faint">{e.detail}</p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="font-medium leading-snug">{e.school}</p>
-                <p className="mt-0.5 text-[13px] text-accent">{e.program}</p>
-                <p className="mt-1 text-xs leading-relaxed text-ink-faint">{e.detail}</p>
-                <p className="mt-2 font-mono text-[11px] text-ink-faint">{e.period}</p>
-              </div>
-            </div>
+            </Reveal>
           ))}
         </div>
-      </motion.section>
+      </Reveal>
 
       {/* Languages */}
-      <motion.section initial="hidden" animate="show" custom={4} variants={rise} className="pb-2">
-        <SectionTitle>Languages</SectionTitle>
-        <div className="grid grid-cols-3 gap-3">
+      <Reveal as="section">
+        <SectionTitle index="C">Languages</SectionTitle>
+        <div className="grid grid-cols-1 gap-px overflow-hidden rounded-card bg-line sm:grid-cols-3">
           {spokenLanguages.map((l) => (
-            <div key={l.code} className="card flex items-center gap-3 p-4">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] font-mono text-xs font-semibold text-ink-muted">
-                {l.code}
-              </span>
+            <div key={l.code} className="flex items-center gap-4 bg-surface p-5">
+              <span className="display text-[34px] leading-none text-accent">{l.code}</span>
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{l.name}</p>
-                <p className="truncate text-xs text-ink-faint">{l.level}</p>
+                <p className="text-[14px] text-ink">{l.name}</p>
+                <p className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-ink-faint">{l.level}</p>
               </div>
             </div>
           ))}
         </div>
-      </motion.section>
+      </Reveal>
     </div>
   );
 }

@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Check, Search } from 'lucide-react';
+import { Check, MagnifyingGlass } from '@phosphor-icons/react';
 import { APPS, APP_MAP } from '@/components/apps/registry';
 import { profile } from '@/data/portfolio';
 import { Logo } from '@/components/ui/BrandIcons';
-import { useIsMac, useNow } from '@/lib/hooks';
+import { useIsMac, useIsMobile, useNow } from '@/lib/hooks';
 import { useOS } from './OSContext';
 import { MENU_H } from './Window';
 
@@ -35,6 +35,7 @@ export default function MenuBar({ onShowShortcuts }: { onShowShortcuts: () => vo
   const alt = mod === '⌘' ? '⌥' : 'Alt+';
 
   const focused = os.focusedId ? APP_MAP[os.focusedId] : null;
+  const mobile = useIsMobile();
 
   useEffect(() => {
     if (!openMenu) return;
@@ -53,7 +54,12 @@ export default function MenuBar({ onShowShortcuts }: { onShowShortcuts: () => vo
   const menus: Menu[] = [
     {
       id: 'brand',
-      label: <Logo className="h-[15px] w-auto" />,
+      label: (
+        <span className="flex items-center gap-2">
+          <Logo className="h-[16px] w-auto text-ink" />
+          <span className="hidden font-mono text-[11px] tracking-[0.14em] text-ink lg:inline">M.BELOUARRAQ</span>
+        </span>
+      ),
       items: [
         { label: 'About This Portfolio', action: () => os.open('about') },
         { divider: true, label: '' },
@@ -115,54 +121,61 @@ export default function MenuBar({ onShowShortcuts }: { onShowShortcuts: () => vo
   ];
 
   return (
-    <header
+    <motion.header
       ref={barRef}
-      className="material-glass fixed inset-x-0 top-0 z-[9500] flex items-center justify-between px-2 text-[13px] text-ink/90"
-      style={{ height: MENU_H, boxShadow: 'inset 0 -0.5px 0 rgb(255 255 255 / 0.1)' }}
+      initial={{ y: -MENU_H }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+      className="fixed inset-x-0 top-0 z-[9500] flex items-center justify-between border-b border-line bg-surface/95 pl-3 pr-2 text-[13px] text-ink/90 backdrop-blur-md"
+      style={{ height: MENU_H }}
     >
-      <nav className="flex items-center" aria-label="Menu bar">
+      <nav className="flex items-center gap-0.5" aria-label="Menu bar">
         {menus.map((m, i) => (
-          <div key={m.id} className={`relative ${i > 1 ? 'hidden sm:block' : ''}`}>
+          <div key={m.id} className={`relative ${i > 1 ? 'hidden sm:block' : ''} ${i === 0 ? 'mr-2' : ''}`}>
             <button
               type="button"
               aria-haspopup="menu"
               aria-expanded={openMenu === m.id}
               onClick={() => setOpenMenu(openMenu === m.id ? null : m.id)}
               onPointerEnter={() => openMenu && openMenu !== m.id && setOpenMenu(m.id)}
-              className={`flex h-[22px] items-center rounded-[5px] px-2.5 transition-colors duration-75 ${
-                openMenu === m.id ? 'bg-white/20' : 'hover:bg-white/10'
-              } ${m.bold ? 'font-semibold' : ''}`}
+              className={`press relative flex h-7 items-center rounded-ctl px-2.5 transition-colors duration-150 ${
+                openMenu === m.id ? 'bg-white/[0.08] text-ink' : 'text-ink-muted hover:bg-white/[0.05] hover:text-ink'
+              } ${m.bold ? 'font-medium !text-ink' : ''}`}
             >
               {m.label}
+              {openMenu === m.id && <motion.span layoutId="menu-underline" className="absolute inset-x-2 -bottom-[7px] h-[2px] bg-accent" />}
             </button>
             <AnimatePresence>
               {openMenu === m.id && (
                 <motion.div
                   role="menu"
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, transition: { duration: 0.12 } }}
-                  transition={{ duration: 0.14 }}
-                  className="material-thick absolute left-0 top-[26px] min-w-[230px] rounded-[10px] p-[5px] shadow-popover"
+                  initial={{ opacity: 0, y: -6, clipPath: 'inset(0 0 100% 0)' }}
+                  animate={{ opacity: 1, y: 0, clipPath: 'inset(0 0 0% 0)' }}
+                  exit={{ opacity: 0, y: -4, transition: { duration: 0.12 } }}
+                  transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                  className="absolute left-0 top-[34px] min-w-[240px] rounded-card bg-surface-raised p-1.5 shadow-popover"
                 >
                   {m.items.map((it, j) =>
                     it.divider ? (
-                      <div key={j} className="mx-2 my-[5px] h-px bg-white/10" />
+                      <div key={j} className="mx-2 my-1.5 h-px bg-line" />
                     ) : (
-                      <button
+                      <motion.button
                         key={j}
                         role="menuitem"
                         disabled={it.disabled}
+                        initial={{ opacity: 0, x: -4 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.2, delay: 0.02 * j }}
                         onClick={() => {
                           setOpenMenu(null);
                           it.action?.();
                         }}
-                        className="flex w-full items-center gap-2 rounded-[5px] px-2 py-[3px] text-left text-[13px] text-ink/90 hover:bg-[#2f64d6] hover:text-white disabled:pointer-events-none disabled:text-ink/30"
+                        className="group flex w-full items-center gap-2 rounded-ctl px-2 py-[6px] text-left text-[13px] text-ink/90 transition-colors hover:bg-accent hover:text-[#170a03] disabled:pointer-events-none disabled:text-ink/30"
                       >
-                        <span className="flex w-3 justify-center">{it.checked && <Check className="h-3 w-3" strokeWidth={3} />}</span>
+                        <span className="flex w-3 justify-center">{it.checked && <Check size={12} weight="bold" />}</span>
                         <span className="flex-1">{it.label}</span>
-                        {it.shortcut && <span className="text-xs text-ink/40">{it.shortcut}</span>}
-                      </button>
+                        {it.shortcut && <span className="font-mono text-[10.5px] text-ink-faint group-hover:text-[#170a03]/70">{it.shortcut}</span>}
+                      </motion.button>
                     ),
                   )}
                 </motion.div>
@@ -172,46 +185,36 @@ export default function MenuBar({ onShowShortcuts }: { onShowShortcuts: () => vo
         ))}
       </nav>
 
-      <div className="flex items-center gap-1 text-ink/85">
+      <div className="flex items-center gap-2 text-ink-muted">
         <button
           type="button"
           onClick={() => os.setSpotlightOpen(true)}
           aria-label="Search"
-          className="flex h-[22px] items-center rounded-[5px] px-2 transition-colors hover:bg-white/10"
+          className="press ripple-host flex h-7 items-center gap-2 rounded-ctl px-2.5 text-ink-muted shadow-[inset_0_0_0_1px_rgb(var(--ink)/0.12)] transition-[color,box-shadow] hover:text-ink hover:shadow-[inset_0_0_0_1px_rgb(var(--ink)/0.3)] sm:w-56"
         >
-          <Search className="h-[15px] w-[15px]" strokeWidth={2.25} />
+          <MagnifyingGlass size={14} weight="bold" />
+          <span className="hidden text-[12px] sm:inline">Search portfolio</span>
+          <kbd className="ml-auto hidden sm:inline-flex">{mod === '⌘' ? '⌘K' : 'Ctrl K'}</kbd>
         </button>
-        <StatusIcons />
-        <span className="px-2 tabular-nums" suppressHydrationWarning>
+        {!mobile && (
+          <span className="hidden items-center gap-2 border-l border-line pl-3 font-mono text-[10.5px] uppercase tracking-[0.14em] text-ink-faint md:flex">
+            <span className="h-1.5 w-1.5 animate-pulse2 rounded-full bg-ok" />
+            Available
+          </span>
+        )}
+        <span className="border-l border-line pl-3 pr-1 font-mono text-[11.5px] tabular-nums text-ink" suppressHydrationWarning>
           {now
             ? (
                 <>
-                  <span className="hidden sm:inline">
-                    {now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}&nbsp;&nbsp;
+                  <span className="hidden text-ink-faint sm:inline">
+                    {now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase()}&nbsp;&nbsp;
                   </span>
-                  {now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                  {now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}
                 </>
               )
             : null}
         </span>
       </div>
-    </header>
-  );
-}
-
-function StatusIcons() {
-  return (
-    <div className="hidden items-center gap-3 px-2 sm:flex" aria-hidden>
-      <svg width="23" height="11" viewBox="0 0 23 11" fill="none">
-        <rect x="0.5" y="0.5" width="19" height="10" rx="3" stroke="currentColor" strokeOpacity="0.5" />
-        <rect x="2" y="2" width="15" height="7" rx="1.6" fill="currentColor" />
-        <path d="M21 3.8v3.4c.7-.3 1.2-1 1.2-1.7s-.5-1.4-1.2-1.7Z" fill="currentColor" fillOpacity="0.5" />
-      </svg>
-      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor">
-        <path d="M8 2.3c2.2 0 4.2.9 5.7 2.3l1.1-1.1A9.6 9.6 0 0 0 8 .7 9.6 9.6 0 0 0 1.2 3.5l1.1 1.1A8 8 0 0 1 8 2.3Z" />
-        <path d="M8 5.5c1.3 0 2.5.5 3.4 1.3l1.1-1.1A6.4 6.4 0 0 0 8 3.9c-1.7 0-3.3.7-4.5 1.8l1.1 1.1c.9-.8 2.1-1.3 3.4-1.3Z" />
-        <path d="M8 8.7c.5 0 .9.2 1.2.5L8 10.9 6.8 9.2c.3-.3.7-.5 1.2-.5Z" />
-      </svg>
-    </div>
+    </motion.header>
   );
 }

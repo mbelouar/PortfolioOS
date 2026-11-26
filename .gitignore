@@ -50,3 +50,5 @@ Thumbs.db
 .Trashes
 ehthumbs.db
 Desktop.ini
+.playwright-mcp/
+.claude/

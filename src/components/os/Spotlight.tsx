@@ -3,21 +3,20 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useIsPresent } from 'framer-motion';
 import {
+  ArrowElbowDownLeft,
   ArrowUpRight,
-  BadgeCheck,
   Copy,
-  CornerDownLeft,
   Cpu,
+  EnvelopeSimple,
   FileText,
-  FolderGit2,
-  Lock,
-  Mail,
-  NotebookPen,
-  Search,
-  type LucideIcon,
-} from 'lucide-react';
+  FolderSimple,
+  LockSimple,
+  MagnifyingGlass,
+  Notebook,
+  SealCheck,
+  type Icon,
+} from '@phosphor-icons/react';
 import { APPS } from '@/components/apps/registry';
-import AppIcon from '@/components/ui/AppIcon';
 import { GithubIcon, LinkedinIcon } from '@/components/ui/BrandIcons';
 import { certifications, certMeta, profile, projects, skillCategories } from '@/data/portfolio';
 import { journal } from '@/data/journal';
@@ -33,9 +32,9 @@ interface Result {
   run: () => void;
 }
 
-const glyph = (Icon: LucideIcon | ((p: React.SVGProps<SVGSVGElement>) => React.ReactElement), tint = 'text-ink-muted') => (
-  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/[0.08]">
-    <Icon className={`h-4 w-4 ${tint}`} />
+const glyph = (G: Icon | ((p: { size?: number }) => React.ReactElement)) => (
+  <span className="flex h-8 w-8 items-center justify-center rounded-ctl shadow-[inset_0_0_0_1px_rgb(var(--ink)/0.14)]">
+    <G size={16} />
   </span>
 );
 
@@ -80,7 +79,7 @@ function SpotlightPanel() {
         title: a.name,
         subtitle: 'Application',
         keywords: a.keywords,
-        icon: <AppIcon icon={a.icon} tint={a.tint} glyph={a.glyph} size={28} />,
+        icon: glyph(a.icon),
         run: () => os.open(a.id),
       })),
       {
@@ -121,7 +120,7 @@ function SpotlightPanel() {
         title: 'Send a Message',
         subtitle: 'Contact form',
         keywords: 'hire email write contact',
-        icon: glyph(Mail),
+        icon: glyph(EnvelopeSimple),
         run: () => os.open('contact'),
       },
       {
@@ -139,7 +138,7 @@ function SpotlightPanel() {
         title: 'Open LinkedIn',
         subtitle: 'Profile',
         keywords: 'network social',
-        icon: glyph(LinkedinIcon, 'text-[#5aa4ff]'),
+        icon: glyph(LinkedinIcon),
         run: () => window.open(profile.linkedin, '_blank', 'noopener'),
       },
       {
@@ -147,7 +146,7 @@ function SpotlightPanel() {
         group: 'Actions',
         title: 'Lock Screen',
         keywords: 'sleep logout',
-        icon: glyph(Lock),
+        icon: glyph(LockSimple),
         run: os.lock,
       },
       ...projects.map((p) => ({
@@ -156,7 +155,7 @@ function SpotlightPanel() {
         title: p.name,
         subtitle: p.subtitle,
         keywords: p.tech.join(' '),
-        icon: glyph(FolderGit2, 'text-[#ffb547]'),
+        icon: glyph(FolderSimple),
         run: () => os.open('projects', { project: p.id }),
       })),
       ...journal.map((post) => ({
@@ -165,7 +164,7 @@ function SpotlightPanel() {
         title: post.title,
         subtitle: post.date.slice(0, 4),
         keywords: `${post.summary} ${(post.tags ?? []).join(' ')}`,
-        icon: glyph(NotebookPen, 'text-[#8f9bff]'),
+        icon: glyph(Notebook),
         run: () => os.open('journal'),
       })),
       ...skillCategories.flatMap((c) =>
@@ -175,7 +174,7 @@ function SpotlightPanel() {
           title: s.name,
           subtitle: c.title,
           keywords: '',
-          icon: glyph(Cpu, 'text-[#b69cff]'),
+          icon: glyph(Cpu),
           run: () => os.open('skills', { q: s.name }),
         })),
       ),
@@ -185,7 +184,7 @@ function SpotlightPanel() {
         title: c.short,
         subtitle: certMeta(c),
         keywords: c.name,
-        icon: glyph(BadgeCheck, 'text-[#ff8ab8]'),
+        icon: glyph(SealCheck),
         run: () => os.open('certifications'),
       })),
     ],
@@ -243,22 +242,22 @@ function SpotlightPanel() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.15 }}
-      className="fixed inset-0 z-[9800] flex items-start justify-center bg-black/25 px-4 pt-[14vh]"
+      className="fixed inset-0 z-[9800] flex items-start justify-center bg-base/70 px-4 pt-[12vh] backdrop-blur-[2px]"
       style={{ pointerEvents: present ? 'auto' : 'none' }}
       onPointerDown={(e) => e.target === e.currentTarget && close()}
     >
       <motion.div
         role="dialog"
         aria-label="Spotlight search"
-        initial={{ opacity: 0, scale: 0.96, y: -8 }}
+        initial={{ opacity: 0, scale: 0.97, y: -12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.97, y: -6 }}
-        transition={{ type: 'spring', stiffness: 500, damping: 36 }}
-        className="material-thick w-full max-w-[640px] overflow-hidden rounded-2xl shadow-popover"
+        exit={{ opacity: 0, scale: 0.98, y: -8 }}
+        transition={{ type: 'spring', stiffness: 460, damping: 34 }}
+        className="w-full max-w-[660px] overflow-hidden rounded-win bg-surface shadow-popover"
         onKeyDown={onKeyDown}
       >
-        <div className="flex items-center gap-3 px-4">
-          <Search className="h-5 w-5 shrink-0 text-ink-faint" />
+        <div className="flex items-center gap-3 border-b border-line px-5">
+          <MagnifyingGlass size={20} className="shrink-0 text-accent" />
           <input
             ref={inputRef}
             value={query}
@@ -270,26 +269,32 @@ function SpotlightPanel() {
             aria-label="Search"
             aria-controls="spotlight-results"
             aria-activedescendant={results[active] ? `sr-${results[active].id}` : undefined}
-            className="h-14 flex-1 bg-transparent text-[19px] font-light text-ink placeholder:text-ink-faint focus:outline-none"
+            className="display h-16 flex-1 bg-transparent text-[26px] text-ink placeholder:text-ink-faint focus:outline-none"
             spellCheck={false}
             autoComplete="off"
           />
-          <kbd className="hidden rounded-md bg-white/[0.08] px-1.5 py-0.5 font-sans text-[11px] text-ink-faint sm:block">esc</kbd>
+          <kbd className="hidden sm:inline-flex">esc</kbd>
         </div>
 
         <div
           ref={listRef}
           id="spotlight-results"
           role="listbox"
-          className="scrollbar-mac max-h-[min(420px,55vh)] overflow-y-auto border-t border-white/[0.07] p-2"
+          className="scrollbar-mac max-h-[min(440px,55vh)] overflow-y-auto p-2"
         >
-          {results.length === 0 && <p className="px-3 py-8 text-center text-sm text-ink-faint">No results for “{query}”</p>}
+          {results.length === 0 && (
+            <div className="flex flex-col items-center gap-2 px-3 py-12 text-center">
+              <MagnifyingGlass size={28} className="text-ink-faint" />
+              <p className="display text-2xl text-ink">Nothing found</p>
+              <p className="text-[13px] text-ink-faint">No match for “{query}”. Try a skill, project or app name.</p>
+            </div>
+          )}
           {results.map((r, i) => {
             const header = i === 0 || results[i - 1].group !== r.group ? r.group : null;
             const isActive = i === active;
             return (
               <div key={r.id}>
-                {header && <p className="px-3 pb-1 pt-2.5 text-[11px] font-semibold text-ink-faint">{header}</p>}
+                {header && <p className="px-3 pb-1.5 pt-3 font-mono text-[10px] uppercase tracking-[0.18em] text-ink-faint">{header}</p>}
                 <button
                   id={`sr-${r.id}`}
                   data-idx={i}
@@ -297,26 +302,27 @@ function SpotlightPanel() {
                   aria-selected={isActive}
                   onPointerMove={() => !isActive && setActive(i)}
                   onClick={() => execute(r)}
-                  className={`flex w-full items-center gap-3 rounded-[10px] px-3 py-2 text-left transition-colors duration-75 ${
-                    isActive ? 'bg-[#2f64d6] text-white' : 'text-ink'
+                  className={`relative flex w-full items-center gap-3 rounded-ctl px-3 py-2 text-left transition-colors duration-100 ${
+                    isActive ? 'bg-accent/[0.12] text-ink' : 'text-ink-muted'
                   }`}
                 >
-                  {r.icon}
+                  {isActive && <motion.span layoutId="spot-bar" className="absolute inset-y-1.5 left-0 w-[2px] rounded-full bg-accent" transition={{ type: 'spring', stiffness: 600, damping: 40 }} />}
+                  <span className={isActive ? 'text-accent' : 'text-ink-muted'}>{r.icon}</span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[14px] font-medium">{r.title}</span>
                   </span>
                   {r.subtitle && (
                     <span
-                      className={`hidden max-w-[45%] truncate text-xs sm:block ${isActive ? 'text-white/75' : 'text-ink-faint'}`}
+                      className={`hidden max-w-[45%] truncate text-xs sm:block ${isActive ? 'text-ink-muted' : 'text-ink-faint'}`}
                     >
                       {r.subtitle}
                     </span>
                   )}
                   {isActive &&
                     (r.id.startsWith('act-github') || r.id.startsWith('act-linkedin') ? (
-                      <ArrowUpRight className="h-4 w-4 shrink-0 text-white/80" />
+                      <ArrowUpRight size={16} className="shrink-0 text-accent" />
                     ) : (
-                      <CornerDownLeft className="h-4 w-4 shrink-0 text-white/80" />
+                      <ArrowElbowDownLeft size={16} className="shrink-0 text-accent" />
                     ))}
                 </button>
               </div>

@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowUpRight, Check, CircleAlert, Copy, LoaderCircle, Mail, MapPin, Phone, Send } from 'lucide-react';
+import { ArrowUpRight, Check, CircleNotch, Copy, EnvelopeSimple, MapPin, PaperPlaneTilt, Phone, WarningCircle } from '@phosphor-icons/react';
 import { useOS } from '@/components/os/OSContext';
 import { GithubIcon, LinkedinIcon } from '@/components/ui/BrandIcons';
-import { AppHeader } from '@/components/ui/Section';
+import { AppHeader, Reveal } from '@/components/ui/Section';
 import { profile } from '@/data/portfolio';
 import type { AppProps } from './registry';
 
@@ -33,7 +33,7 @@ export default function ContactApp({ params, paramsKey = 0 }: AppProps) {
     try {
       await navigator.clipboard.writeText(profile.email);
       setCopied(true);
-      notify({ title: 'Email copied', body: profile.email, icon: <Check className="h-4 w-4 text-ok" /> });
+      notify({ title: 'Email copied', body: profile.email, icon: <Check size={16} weight="bold" className="text-ok" /> });
       window.setTimeout(() => setCopied(false), 1800);
     } catch {
       window.location.href = `mailto:${profile.email}`;
@@ -62,7 +62,7 @@ export default function ContactApp({ params, paramsKey = 0 }: AppProps) {
   };
 
   const channels = [
-    { icon: Mail, label: 'Email', value: profile.email, href: `mailto:${profile.email}` },
+    { icon: EnvelopeSimple, label: 'Email', value: profile.email, href: `mailto:${profile.email}` },
     { icon: Phone, label: 'Phone', value: profile.phone, href: `tel:${profile.phone.replace(/\s/g, '')}` },
     { icon: MapPin, label: 'Based in', value: profile.location },
   ];
@@ -70,105 +70,112 @@ export default function ContactApp({ params, paramsKey = 0 }: AppProps) {
   return (
     <div className="mx-auto max-w-4xl">
       <AppHeader
-        eyebrow="Contact"
+        index="08"
+        eyebrow="Contact · reply within a day"
         title="Let's build something."
-        subtitle="Internships, collaborations or a quick question — I usually reply within a day."
+        subtitle="Internships, collaborations or a quick question. Write directly or use the form."
       />
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_1.35fr]">
+      <div className="grid gap-10 lg:grid-cols-[1fr_1.3fr]">
         {/* Channels */}
-        <div className="flex flex-col gap-3">
-          <div className="card divide-y divide-white/[0.06]">
-            {channels.map((c) => {
+        <Reveal className="flex flex-col">
+          <p className="eyebrow mb-3">Direct line</p>
+          <button
+            onClick={copyEmail}
+            className="press-soft press group border-y border-line py-5 text-left"
+            aria-label="Copy email address"
+          >
+            <span className="display block break-all text-[26px] leading-tight text-ink transition-colors group-hover:text-accent sm:text-[30px]">
+              {profile.email}
+            </span>
+            <span className="mt-2 flex items-center gap-1.5 font-mono text-[10.5px] uppercase tracking-[0.14em] text-ink-faint">
+              {copied ? <Check size={12} weight="bold" className="text-ok" /> : <Copy size={12} />}
+              {copied ? 'Copied to clipboard' : 'Click to copy'}
+            </span>
+          </button>
+
+          <ul className="divide-y divide-line border-b border-line">
+            {channels.slice(1).map((c) => {
               const Inner = (
                 <>
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] text-ink-muted">
-                    <c.icon className="h-4 w-4" />
-                  </span>
+                  <c.icon size={18} className="text-ink-faint transition-colors group-hover:text-accent" />
                   <span className="min-w-0">
-                    <span className="block text-[11px] text-ink-faint">{c.label}</span>
-                    <span className="block truncate text-[13px] font-medium">{c.value}</span>
+                    <span className="block font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">{c.label}</span>
+                    <span className="block truncate text-[14px] text-ink">{c.value}</span>
                   </span>
                 </>
               );
-              return c.href ? (
-                <a key={c.label} href={c.href} className="flex items-center gap-3 p-3.5 transition-colors hover:bg-white/[0.03]">
-                  {Inner}
-                </a>
-              ) : (
-                <div key={c.label} className="flex items-center gap-3 p-3.5">
-                  {Inner}
-                </div>
+              return (
+                <li key={c.label}>
+                  {c.href ? (
+                    <a href={c.href} className="press-soft press group flex items-center gap-4 py-4">
+                      {Inner}
+                      <ArrowUpRight size={14} className="ml-auto text-ink-faint opacity-0 transition-opacity group-hover:opacity-100" />
+                    </a>
+                  ) : (
+                    <div className="group flex items-center gap-4 py-4">{Inner}</div>
+                  )}
+                </li>
               );
             })}
-          </div>
+          </ul>
 
-          <button onClick={copyEmail} className="btn-secondary w-full">
-            {copied ? <Check className="h-4 w-4 text-ok" /> : <Copy className="h-4 w-4" />}
-            {copied ? 'Copied to clipboard' : 'Copy email address'}
-          </button>
-
-          <div className="grid grid-cols-2 gap-3">
-            <a href={profile.linkedin} target="_blank" rel="noopener noreferrer" className="card card-hover group flex items-center gap-3 p-3.5">
-              <LinkedinIcon className="h-5 w-5 text-[#5aa4ff]" />
-              <span className="text-[13px] font-medium">LinkedIn</span>
-              <ArrowUpRight className="ml-auto h-3.5 w-3.5 text-ink-faint transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+          <div className="mt-5 grid grid-cols-2 gap-2">
+            <a href={profile.linkedin} target="_blank" rel="noopener noreferrer" className="btn-secondary justify-between">
+              <span className="flex items-center gap-2">
+                <LinkedinIcon size={16} /> LinkedIn
+              </span>
+              <ArrowUpRight size={12} weight="bold" />
             </a>
-            <a href={profile.github} target="_blank" rel="noopener noreferrer" className="card card-hover group flex items-center gap-3 p-3.5">
-              <GithubIcon className="h-5 w-5" />
-              <span className="text-[13px] font-medium">GitHub</span>
-              <ArrowUpRight className="ml-auto h-3.5 w-3.5 text-ink-faint transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+            <a href={profile.github} target="_blank" rel="noopener noreferrer" className="btn-secondary justify-between">
+              <span className="flex items-center gap-2">
+                <GithubIcon size={16} /> GitHub
+              </span>
+              <ArrowUpRight size={12} weight="bold" />
             </a>
           </div>
-        </div>
+        </Reveal>
 
         {/* Form */}
-        <div className="card relative overflow-hidden p-5">
+        <Reveal delay={0.1} className="card relative overflow-hidden p-6">
           <AnimatePresence mode="wait" initial={false}>
             {status === 'sent' ? (
               <motion.div
                 key="sent"
-                initial={{ opacity: 0, scale: 0.96 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.96 }}
-                transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
-                className="flex min-h-[340px] flex-col items-center justify-center text-center"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                className="flex min-h-[380px] flex-col items-center justify-center text-center"
               >
                 <motion.span
-                  initial={{ scale: 0.4, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ type: 'spring', stiffness: 260, damping: 16, delay: 0.1 }}
-                  className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-ok/15 ring-1 ring-ok/30"
+                  initial={{ scale: 0.3, rotate: -30, opacity: 0 }}
+                  animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 260, damping: 14, delay: 0.1 }}
+                  className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-accent text-[#170a03]"
                 >
-                  <Check className="h-8 w-8 text-ok" strokeWidth={2.5} />
+                  <Check size={30} weight="bold" />
                 </motion.span>
-                <h3 className="text-lg font-semibold">Message sent</h3>
-                <p className="mt-1 max-w-xs text-sm text-ink-muted">Thanks for reaching out — I&apos;ll get back to you soon.</p>
-                <button onClick={() => setStatus('idle')} className="btn-secondary mt-6">
+                <h3 className="display text-[34px] leading-none">Message sent</h3>
+                <p className="mt-3 max-w-xs text-sm text-ink-muted">Thanks for reaching out. I&apos;ll get back to you soon.</p>
+                <button onClick={() => setStatus('idle')} className="btn-secondary mt-7">
                   Send another
                 </button>
               </motion.div>
             ) : (
-              <motion.form
-                key="form"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onSubmit={submit}
-                className="space-y-3"
-              >
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <Field label="Name">
+              <motion.form key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onSubmit={submit} className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field n="01" label="Name">
                     <input name="name" value={form.name} onChange={update} required maxLength={LIMITS.name} autoComplete="name" placeholder="Jane Doe" className="input" />
                   </Field>
-                  <Field label="Email">
+                  <Field n="02" label="Email">
                     <input name="email" type="email" value={form.email} onChange={update} required maxLength={LIMITS.email} autoComplete="email" placeholder="jane@company.com" className="input" />
                   </Field>
                 </div>
-                <Field label="Subject">
+                <Field n="03" label="Subject">
                   <input name="subject" value={form.subject} onChange={update} required maxLength={LIMITS.subject} placeholder="Internship opportunity" className="input" />
                 </Field>
-                <Field label="Message" counter={`${form.message.length}/${LIMITS.message}`}>
+                <Field n="04" label="Message" counter={`${form.message.length}/${LIMITS.message}`}>
                   <textarea
                     name="message"
                     value={form.message}
@@ -198,42 +205,43 @@ export default function ContactApp({ params, paramsKey = 0 }: AppProps) {
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
                       role="alert"
-                      className="flex items-start gap-2 overflow-hidden rounded-xl bg-red-500/10 px-3 py-2.5 text-[13px] text-red-300 ring-1 ring-red-500/20"
+                      className="flex items-start gap-2 overflow-hidden rounded-ctl px-3 py-2.5 text-[13px] text-bad shadow-[inset_0_0_0_1px_rgb(var(--bad)/0.35)]"
                     >
-                      <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+                      <WarningCircle size={16} weight="bold" className="mt-0.5 shrink-0" />
                       {error}
                     </motion.p>
                   )}
                 </AnimatePresence>
 
-                <button type="submit" disabled={status === 'sending'} className="btn-primary group w-full !py-3">
+                <button type="submit" disabled={status === 'sending'} className="btn-primary group w-full !py-3.5">
                   {status === 'sending' ? (
                     <>
-                      <LoaderCircle className="h-4 w-4 animate-spin" />
+                      <CircleNotch size={16} weight="bold" className="animate-spin" />
                       Sending…
                     </>
                   ) : (
                     <>
                       Send message
-                      <Send className="h-4 w-4 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                      <PaperPlaneTilt size={16} weight="bold" className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                     </>
                   )}
                 </button>
               </motion.form>
             )}
           </AnimatePresence>
-        </div>
+        </Reveal>
       </div>
     </div>
   );
 }
 
-function Field({ label, counter, children }: { label: string; counter?: string; children: React.ReactNode }) {
+function Field({ n, label, counter, children }: { n: string; label: string; counter?: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1.5 flex items-center justify-between text-xs font-medium text-ink-muted">
+      <span className="mb-2 flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.14em] text-ink-muted">
+        <span className="text-accent">{n}</span>
         {label}
-        {counter && <span className="font-mono text-[10px] text-ink-faint">{counter}</span>}
+        {counter && <span className="ml-auto text-ink-faint">{counter}</span>}
       </span>
       {children}
     </label>

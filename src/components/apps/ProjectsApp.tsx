@@ -2,9 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowUpRight, BookOpen, ChevronDown, Lock, MessageSquare, Sparkles } from 'lucide-react';
+import { ArrowUpRight, BookOpen, CaretDown, ChatCircle, GithubLogo, LockSimple, Sparkle } from '@phosphor-icons/react';
 import { useOS } from '@/components/os/OSContext';
-import { GithubIcon } from '@/components/ui/BrandIcons';
 import { AppHeader, Segmented } from '@/components/ui/Section';
 import { profile, projects, type CaseStudy, type Project, type ProjectCategory } from '@/data/portfolio';
 import { trackPointer } from '@/lib/hooks';
@@ -56,15 +55,20 @@ export default function ProjectsApp({ params, paramsKey }: AppProps) {
   return (
     <div className="mx-auto max-w-4xl">
       <AppHeader
-        eyebrow={`${projects.length} projects`}
+        index="02"
+        eyebrow={`${projects.length} projects · selected work`}
         title="Projects"
         subtitle="Infrastructure, platforms and products I've designed, built and shipped."
       />
-      <div className="scrollbar-none -mx-1 -mt-2 mb-5 overflow-x-auto px-1 pb-1">
-        <Segmented value={filter} options={filters} onChange={setFilter} />
+      <div className="scrollbar-none -mx-1 -mt-4 mb-8 overflow-x-auto px-1">
+        <Segmented
+          value={filter}
+          options={filters.map((f) => ({ ...f, count: f.value === 'all' ? projects.length : projects.filter((p) => p.category === f.value).length }))}
+          onChange={setFilter}
+        />
       </div>
 
-      <motion.div layout className="grid gap-3 md:grid-cols-2">
+      <motion.div layout className="grid gap-4 md:grid-cols-2">
         <AnimatePresence mode="popLayout" initial={false}>
           {visible.map((p, i) => (
             <ProjectCard
@@ -84,18 +88,18 @@ export default function ProjectsApp({ params, paramsKey }: AppProps) {
         href={`${profile.github}?tab=repositories`}
         target="_blank"
         rel="noopener noreferrer"
-        className="card card-hover group mt-3 flex items-center justify-between p-4"
+        className="press-soft press group mt-8 flex items-center justify-between border-y border-line py-6"
       >
-        <span className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.06]">
-            <GithubIcon className="h-5 w-5" />
-          </span>
+        <span className="flex items-center gap-4">
+          <GithubLogo size={28} className="text-ink-muted transition-colors group-hover:text-accent" />
           <span>
-            <span className="block text-sm font-medium">More on GitHub</span>
-            <span className="block text-xs text-ink-faint">{profile.githubHandle} · all repositories</span>
+            <span className="display block text-[28px] leading-none">More on GitHub</span>
+            <span className="mt-1 block font-mono text-[10.5px] uppercase tracking-[0.14em] text-ink-faint">{profile.githubHandle} · all repositories</span>
           </span>
         </span>
-        <ArrowUpRight className="h-4 w-4 text-ink-faint transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-ink" />
+        <span className="flex h-11 w-11 items-center justify-center rounded-full border border-line-strong transition-all duration-300 group-hover:border-accent group-hover:bg-accent group-hover:text-[#170a03]">
+          <ArrowUpRight size={18} weight="bold" />
+        </span>
       </a>
     </div>
   );
@@ -118,89 +122,71 @@ function ProjectCard({
     <motion.article
       ref={innerRef}
       layout
-      initial={{ opacity: 0, y: 14, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.96 }}
-      transition={{ duration: 0.45, delay: index * 0.04, ease: [0.32, 0.72, 0, 1] }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.97 }}
+      transition={{ duration: 0.55, delay: index * 0.05, ease: [0.22, 1, 0.36, 1] }}
       onPointerMove={trackPointer}
-      className={`card spotlight group flex flex-col p-5 transition-shadow duration-500 ${
-        p.featured ? 'md:col-span-2' : ''
-      } ${highlighted ? 'ring-2 ring-accent/70 ring-offset-0' : ''} ${
-        p.proprietary ? 'shadow-[inset_0_1px_0_0_rgb(255_255_255/0.05),0_0_0_1px_rgb(199_70_52/0.35),0_20px_60px_-30px_rgb(199_70_52/0.6)]' : ''
+      className={`card card-hover spotlight ticks group flex flex-col p-6 ${p.featured ? 'md:col-span-2 md:p-8' : ''} ${
+        highlighted ? 'shadow-glow' : ''
       }`}
     >
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="mb-2 flex flex-wrap items-center gap-2">
-            {p.featured && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-accent">
-                <Sparkles className="h-3 w-3" />
-                Featured
-              </span>
-            )}
-            {p.proprietary && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#c74634]/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#ff8a75] ring-1 ring-[#c74634]/30">
-                <Lock className="h-3 w-3" />
-                Proprietary · {p.proprietary.org}
-              </span>
-            )}
-            <span className="font-mono text-[11px] text-ink-faint">
-              {p.year} · {p.type}
+      <div className="flex items-center justify-between gap-3 border-b border-line pb-3 font-mono text-[10.5px] uppercase tracking-[0.14em] text-ink-faint">
+        <span className="flex items-center gap-3">
+          <span className="text-accent">{String(index + 1).padStart(2, '0')}</span>
+          <span>{p.year}</span>
+          <span className="hidden sm:inline">{p.type}</span>
+        </span>
+        <span className="flex items-center gap-2">
+          {p.featured && (
+            <span className="flex items-center gap-1 text-accent">
+              <Sparkle size={11} weight="fill" /> Featured
             </span>
-          </div>
-          <h3 className={`font-semibold tracking-tight ${p.featured ? 'text-2xl' : 'text-lg'}`}>{p.name}</h3>
-          <p className="mt-0.5 text-sm text-ink-muted">{p.subtitle}</p>
+          )}
+          {p.proprietary && (
+            <span className="flex items-center gap-1 text-bad">
+              <LockSimple size={11} weight="bold" /> {p.proprietary.org}
+            </span>
+          )}
+        </span>
+      </div>
+
+      <div className={`mt-5 flex flex-wrap items-start justify-between gap-4 ${p.featured ? 'md:flex-nowrap' : ''}`}>
+        <div className="min-w-0">
+          <h3 className={`display leading-[1.02] text-ink ${p.featured ? 'text-[44px]' : 'text-[30px]'}`}>{p.name}</h3>
+          <p className="mt-2 text-[14px] text-ink-muted">{p.subtitle}</p>
         </div>
         <div className="flex shrink-0 gap-1.5">
           {p.demo && (
-            <a
-              href={p.demo}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`${p.name} live demo`}
-              className="flex h-9 items-center gap-1.5 rounded-lg bg-white px-3 text-xs font-medium text-black transition-colors hover:bg-white/90"
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-ok" />
+            <a href={p.demo} target="_blank" rel="noopener noreferrer" aria-label={`${p.name} live demo`} className="btn-primary !px-3 !py-2 text-xs">
+              <span className="h-1.5 w-1.5 animate-pulse2 rounded-full bg-[#170a03]" />
               Live
             </a>
           )}
           {p.caseStudy && (
-            <button
-              type="button"
-              onClick={() => setOpen((v) => !v)}
-              aria-expanded={open}
-              className="flex h-9 items-center gap-1.5 rounded-lg bg-white px-3 text-xs font-medium text-black transition-colors hover:bg-white/90"
-            >
-              <BookOpen className="h-3.5 w-3.5" />
+            <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} className="btn-primary !px-3 !py-2 text-xs">
+              <BookOpen size={14} weight="bold" />
               Case study
-              <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-300 ${open ? 'rotate-180' : ''}`} />
+              <CaretDown size={12} weight="bold" className={`transition-transform duration-300 ${open ? 'rotate-180' : ''}`} />
             </button>
           )}
           {p.github && (
-            <a
-              href={p.github}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`${p.name} source code on GitHub`}
-              className="flex h-9 items-center gap-1.5 rounded-lg bg-white/[0.06] px-3 text-xs font-medium text-ink-muted shadow-card transition-colors hover:bg-white/[0.12] hover:text-ink"
-            >
-              <GithubIcon className="h-3.5 w-3.5" />
+            <a href={p.github} target="_blank" rel="noopener noreferrer" aria-label={`${p.name} source code on GitHub`} className="btn-secondary !px-3 !py-2 text-xs">
+              <GithubLogo size={14} />
               Code
-              <ArrowUpRight className="h-3 w-3" />
+              <ArrowUpRight size={12} weight="bold" />
             </a>
           )}
         </div>
       </div>
 
-      <p className={`mt-3 text-[13.5px] leading-relaxed text-ink-muted ${p.featured ? 'max-w-3xl' : ''}`}>
-        {p.description}
-      </p>
+      <p className={`mt-4 text-[14px] leading-[1.7] text-ink-muted ${p.featured ? 'max-w-3xl' : ''}`}>{p.description}</p>
 
       <AnimatePresence initial={false}>
         {open && p.caseStudy && <CaseStudyPanel project={p} caseStudy={p.caseStudy} />}
       </AnimatePresence>
 
-      <div className="mt-auto flex flex-wrap gap-1.5 pt-4">
+      <div className="mt-auto flex flex-wrap gap-1.5 pt-5">
         {p.tech.map((t) => (
           <span key={t} className="chip">
             {t}
@@ -213,7 +199,7 @@ function ProjectCard({
 
 function CaseStudyPanel({ project: p, caseStudy: cs }: { project: Project; caseStudy: CaseStudy }) {
   const { open } = useOS();
-  const EASE = [0.32, 0.72, 0, 1] as const;
+  const EASE = [0.22, 1, 0.36, 1] as const;
 
   return (
     <motion.div
@@ -223,64 +209,54 @@ function CaseStudyPanel({ project: p, caseStudy: cs }: { project: Project; caseS
       transition={{ duration: 0.45, ease: EASE }}
       className="overflow-hidden"
     >
-      <div className="mt-5 space-y-5 border-t border-white/[0.07] pt-5">
+      <div className="mt-6 space-y-7 border-t border-line pt-6">
         {/* Problem */}
         <div>
           <p className="eyebrow mb-1.5">The problem</p>
-          <p className="max-w-3xl text-[13.5px] leading-relaxed text-ink">{cs.problem}</p>
+          <p className="display max-w-3xl text-[22px] leading-snug text-ink">{cs.problem}</p>
         </div>
 
         {/* Pipeline */}
         <div>
           <p className="eyebrow mb-3">How it works</p>
-          <ol className="relative grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <ol className="relative grid gap-px overflow-hidden rounded-card bg-line sm:grid-cols-3 lg:grid-cols-6">
             {cs.pipeline.map((s, i) => (
               <motion.li
                 key={s.step}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.1 + i * 0.07, ease: EASE }}
-                className="relative rounded-xl bg-black/25 p-3 ring-1 ring-white/[0.06]"
+                className="relative bg-surface p-4"
               >
-                <div className="mb-2 flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-b from-[#ff8a75] to-[#c74634] font-mono text-[11px] font-semibold text-white shadow-[0_4px_10px_-2px_rgb(199_70_52/0.6)]">
-                    {i + 1}
-                  </span>
-                  <span className="text-[13px] font-semibold">{s.step}</span>
-                </div>
-                <p className="text-[11.5px] leading-snug text-ink-faint">{s.detail}</p>
-                {i < cs.pipeline.length - 1 && (
-                  <span
-                    aria-hidden
-                    className="absolute -right-2.5 top-1/2 hidden h-px w-2 -translate-y-1/2 bg-gradient-to-r from-[#ff8a75] to-transparent lg:block"
-                  />
-                )}
+                <span className="font-mono text-[10px] text-accent">STEP {String(i + 1).padStart(2, '0')}</span>
+                <p className="mt-2 text-[13.5px] text-ink">{s.step}</p>
+                <p className="mt-1 text-[11.5px] leading-snug text-ink-faint">{s.detail}</p>
               </motion.li>
             ))}
           </ol>
         </div>
 
         {/* Results */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 border-y border-line sm:grid-cols-4">
           {cs.results.map((r, i) => (
             <motion.div
               key={r.label}
               initial={{ opacity: 0, scale: 0.94 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.4, delay: 0.45 + i * 0.06, ease: EASE }}
-              className="rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.06]"
+              className={`px-4 py-4 ${i ? 'sm:border-l sm:border-line' : ''}`}
             >
-              <p className="text-2xl font-semibold tracking-tight">{r.value}</p>
-              <p className="text-[11px] text-ink-faint">{r.label}</p>
+              <p className="display text-[36px] leading-none text-accent">{r.value}</p>
+              <p className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-faint">{r.label}</p>
             </motion.div>
           ))}
         </div>
 
         {/* Confidentiality note + CTA */}
         {p.proprietary && (
-          <div className="flex flex-col gap-3 rounded-xl bg-[#c74634]/[0.08] p-4 ring-1 ring-[#c74634]/20 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 rounded-card p-4 shadow-[inset_0_0_0_1px_rgb(var(--bad)/0.3)] sm:flex-row sm:items-center sm:justify-between">
             <p className="flex items-start gap-2 text-[12.5px] leading-relaxed text-ink-muted">
-              <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#ff8a75]" />
+              <LockSimple size={14} weight="bold" className="mt-0.5 shrink-0 text-bad" />
               {p.proprietary.note}
             </p>
             <button
@@ -288,7 +264,7 @@ function CaseStudyPanel({ project: p, caseStudy: cs }: { project: Project; caseS
               onClick={() => open('contact', { subject: `About your ${p.name}` })}
               className="btn-primary shrink-0 !py-2 text-xs"
             >
-              <MessageSquare className="h-3.5 w-3.5" />
+              <ChatCircle size={14} weight="bold" />
               Ask me about it
             </button>
           </div>

@@ -1,12 +1,13 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Search, X } from 'lucide-react';
-import { AppHeader, SectionTitle } from '@/components/ui/Section';
+import { AnimatePresence, motion } from 'framer-motion';
+import { MagnifyingGlass, X } from '@phosphor-icons/react';
+import { AppHeader, EmptyState, Reveal, SectionTitle } from '@/components/ui/Section';
 import { skillCategories, skillLevelLabel, spokenLanguages, type Skill } from '@/data/portfolio';
-import { trackPointer } from '@/lib/hooks';
 import type { AppProps } from './registry';
+
+const EASE = [0.22, 1, 0.36, 1] as const;
 
 export default function SkillsApp({ params }: AppProps) {
   const [query, setQuery] = useState(params?.q ?? '');
@@ -23,31 +24,37 @@ export default function SkillsApp({ params }: AppProps) {
 
   return (
     <div className="mx-auto max-w-4xl">
-      <AppHeader eyebrow={`${total} technologies`} title="Skills" subtitle="The tools I reach for to build, ship and operate systems.">
-        <label className="relative block w-full sm:w-56">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" />
+      <AppHeader index="03" eyebrow={`${total} technologies`} title="Skills" subtitle="The tools I reach for to build, ship and operate systems.">
+        <label className="relative block w-full sm:w-64">
+          <MagnifyingGlass size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Filter skills"
+            placeholder="Filter the stack"
             aria-label="Filter skills"
-            className="input !py-2 pl-9 pr-8"
+            className="input !py-2.5 pl-9 pr-9"
           />
-          {query && (
-            <button
-              onClick={() => setQuery('')}
-              aria-label="Clear filter"
-              className="absolute right-2 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-ink-muted hover:bg-white/20"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          )}
+          <AnimatePresence>
+            {query && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.6 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.6 }}
+                onClick={() => setQuery('')}
+                aria-label="Clear filter"
+                className="press absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-[4px] text-ink-muted hover:bg-white/10 hover:text-ink"
+              >
+                <X size={12} weight="bold" />
+              </motion.button>
+            )}
+          </AnimatePresence>
         </label>
       </AppHeader>
 
-      <div className="-mt-2 flex flex-wrap items-center gap-4 text-[11px] text-ink-faint">
+      {/* Legend */}
+      <div className="-mt-4 mb-2 flex flex-wrap items-center gap-5 font-mono text-[10.5px] uppercase tracking-[0.14em] text-ink-faint">
         {['Expert', 'Advanced', 'Proficient'].map((l, i) => (
-          <span key={l} className="flex items-center gap-1.5">
+          <span key={l} className="flex items-center gap-2">
             <Meter level={[95, 85, 75][i]} compact />
             {l}
           </span>
@@ -55,102 +62,88 @@ export default function SkillsApp({ params }: AppProps) {
       </div>
 
       {groups.length === 0 && (
-        <div className="card flex flex-col items-center gap-2 p-10 text-center">
-          <p className="text-sm text-ink-muted">No skills match “{query}”.</p>
-          <button className="text-xs text-accent hover:underline" onClick={() => setQuery('')}>
-            Clear filter
-          </button>
+        <div className="mt-8">
+          <EmptyState
+            title="No match in the stack"
+            body={`Nothing called “${query}” yet. Try a broader term like “cloud” or “python”.`}
+            action={
+              <button className="btn-secondary mt-2" onClick={() => setQuery('')}>
+                Clear filter
+              </button>
+            }
+          />
         </div>
       )}
 
       {groups.map((c, ci) => (
-        <section key={c.id}>
-          <SectionTitle aside={<span className="font-mono text-[11px] text-ink-faint">{c.skills.length}</span>}>
+        <Reveal as="section" key={c.id}>
+          <SectionTitle index={String(ci + 1).padStart(2, '0')} aside={<span className="font-mono text-[10.5px] text-ink-faint">{c.skills.length}</span>}>
             {c.title}
           </SectionTitle>
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="grid gap-px overflow-hidden rounded-card bg-line sm:grid-cols-2">
             {c.skills.map((s, i) => (
-              <SkillTile key={s.name} skill={s} delay={ci * 0.05 + i * 0.025} />
+              <SkillRow key={s.name} skill={s} delay={i * 0.03} />
             ))}
+            {c.skills.length % 2 === 1 && <div className="hidden bg-surface sm:block" />}
           </div>
-        </section>
+        </Reveal>
       ))}
 
       {!q && (
-        <section className="pb-2">
-          <SectionTitle>Languages</SectionTitle>
-          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+        <Reveal as="section">
+          <SectionTitle index="—">Spoken languages</SectionTitle>
+          <div className="flex flex-wrap gap-x-10 gap-y-4">
             {spokenLanguages.map((l) => (
-              <div key={l.code} className="card flex items-center gap-3 p-3.5">
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/[0.06] font-mono text-xs font-semibold text-ink-muted">
-                  {l.code}
-                </span>
-                <div>
-                  <p className="text-sm font-medium">{l.name}</p>
-                  <p className="text-xs text-ink-faint">{l.level}</p>
-                </div>
-              </div>
+              <p key={l.code} className="flex items-baseline gap-3">
+                <span className="display text-[28px] leading-none text-ink">{l.name}</span>
+                <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-ink-faint">{l.level}</span>
+              </p>
             ))}
           </div>
-        </section>
+        </Reveal>
       )}
     </div>
   );
 }
 
-function SkillTile({ skill, delay }: { skill: Skill; delay: number }) {
+function SkillRow({ skill, delay }: { skill: Skill; delay: number }) {
   const [broken, setBroken] = useState(false);
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay, ease: [0.32, 0.72, 0, 1] }}
-      onPointerMove={trackPointer}
-      className="card spotlight card-hover group p-3.5"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4, delay, ease: EASE }}
+      className="group flex items-center gap-3.5 bg-surface px-4 py-3.5 transition-colors duration-300 hover:bg-surface-raised"
     >
-      <div className="flex items-center gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[11px] bg-white/[0.92] p-2 shadow-[0_4px_12px_-4px_rgb(0_0_0/0.6)] transition-transform duration-300 ease-mac group-hover:scale-105">
-          {broken ? (
-            <span className="text-sm font-bold text-neutral-700">{skill.name[0]}</span>
-          ) : (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={skill.icon}
-              alt=""
-              width={24}
-              height={24}
-             
-              decoding="async"
-              className="h-full w-full object-contain"
-              onError={() => setBroken(true)}
-            />
-          )}
-        </span>
-        <div className="min-w-0">
-          <p className="line-clamp-2 text-[13px] font-medium leading-tight" title={skill.name}>
-            {skill.name}
-          </p>
-          <p className="text-[11px] text-ink-faint">{skillLevelLabel(skill.level)}</p>
-        </div>
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-ctl bg-white p-1.5 transition-transform duration-500 ease-spring group-hover:-rotate-6 group-hover:scale-110">
+        {broken ? (
+          <span className="font-mono text-sm font-bold text-neutral-700">{skill.name[0]}</span>
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={skill.icon} alt="" width={24} height={24} decoding="async" className="h-full w-full object-contain" onError={() => setBroken(true)} />
+        )}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[14px] text-ink" title={skill.name}>
+          {skill.name}
+        </p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-faint">{skillLevelLabel(skill.level)}</p>
       </div>
-      <div className="mt-3">
-        <Meter level={skill.level} />
-      </div>
+      <Meter level={skill.level} />
     </motion.div>
   );
 }
 
-/** Five-segment meter: reads at a glance and avoids implying false precision. */
+/** Five ticks: reads at a glance and avoids implying false precision. */
 function Meter({ level, compact = false }: { level: number; compact?: boolean }) {
   const filled = level >= 90 ? 5 : level >= 80 ? 4 : 3;
   return (
-    <span className={`flex ${compact ? 'w-10 gap-0.5' : 'w-full gap-1'}`} aria-label={`${skillLevelLabel(level)}`}>
+    <span className={`flex items-end ${compact ? 'gap-[2px]' : 'gap-[3px]'}`} aria-label={skillLevelLabel(level)}>
       {Array.from({ length: 5 }, (_, i) => (
         <span
           key={i}
-          className={`${compact ? 'h-1' : 'h-1.5'} flex-1 rounded-full ${
-            i < filled ? 'bg-gradient-to-r from-accent/90 to-accent' : 'bg-white/[0.08]'
-          }`}
+          className={`${compact ? 'h-2.5 w-[3px]' : 'w-[4px]'} rounded-[1px] transition-colors duration-500 ${i < filled ? 'bg-accent' : 'bg-white/[0.1]'}`}
+          style={compact ? undefined : { height: 6 + i * 3 }}
         />
       ))}
     </span>

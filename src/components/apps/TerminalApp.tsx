@@ -188,7 +188,7 @@ export default function TerminalApp() {
       case 'community':
         out = [L('Community & volunteering', 'head')];
         volunteering.forEach((v) => {
-          out.push(L(''), L(`♥ ${v.role} — ${v.org}`, 'accent'), L(`  ${v.start} → ${v.end} · ${v.cause}`, 'dim'), L(`  ${v.description}`));
+          out.push(L(''), L(`* ${v.role} — ${v.org}`, 'accent'), L(`  ${v.start} → ${v.end} · ${v.cause}`, 'dim'), L(`  ${v.description}`));
         });
         out.push(L(''), L('Tip: `open community` for the timeline view.', 'dim'));
         break;
@@ -196,7 +196,7 @@ export default function TerminalApp() {
       case 'certs':
         out = [L('Certifications', 'head')];
         certifications.forEach((c) => {
-          out.push(L(''), L(`✔ ${c.name}`, 'ok'), L(`  ${certMeta(c)}${c.credentialId ? ` · ID ${c.credentialId}` : ''}`, 'dim'));
+          out.push(L(''), L(`[ok] ${c.name}`, 'ok'), L(`  ${certMeta(c)}${c.credentialId ? ` · ID ${c.credentialId}` : ''}`, 'dim'));
         });
         break;
       case 'education':
@@ -275,9 +275,9 @@ export default function TerminalApp() {
         if (args.join(' ').toLowerCase().includes('hire')) {
           out = [L('[sudo] password for recruiter: ********', 'dim'), L('Access granted. Opening a direct line…', 'ok')];
           window.setTimeout(() => open('contact'), 500);
-          notify({ title: 'Great choice 🎉', body: 'The contact form is ready for you.' });
+          notify({ title: 'Great choice', body: 'The contact form is ready for you.' });
         } else {
-          out = [L('mohammed is not in the sudoers file. This incident will be reported. 👀', 'err'), L('(psst — try `sudo hire-me`)', 'dim')];
+          out = [L('mohammed is not in the sudoers file. This incident will be reported.', 'err'), L('(psst — try `sudo hire-me`)', 'dim')];
         }
         break;
       case 'clear':
@@ -344,30 +344,30 @@ export default function TerminalApp() {
   };
 
   const toneClass: Record<Tone, string> = {
-    out: 'text-[#d4d4d8]',
-    cmd: 'text-white',
-    err: 'text-[#ff7b72]',
-    dim: 'text-[#8b8b93]',
-    accent: 'text-[#8ab4ff]',
-    ok: 'text-[#56d364]',
-    head: 'text-white font-semibold',
+    out: 'text-ink/85',
+    cmd: 'text-ink',
+    err: 'text-bad',
+    dim: 'text-ink-faint',
+    accent: 'text-accent',
+    ok: 'text-ok',
+    head: 'text-ink font-semibold',
   };
 
   return (
     <div
-      className="flex h-full flex-col bg-[#0d0d10]/95 font-mono text-[12.5px] leading-[1.6]"
+      className="flex h-full flex-col bg-surface-sunken font-mono text-[12.5px] leading-[1.7]"
       onMouseUp={() => {
         if (!window.getSelection()?.toString()) inputRef.current?.focus({ preventScroll: true });
       }}
     >
-      <div ref={scrollRef} className="scrollbar-mac flex-1 overflow-y-auto px-4 pb-2 pt-3">
+      <div ref={scrollRef} className="scrollbar-mac flex-1 overflow-y-auto px-5 pb-3 pt-4">
         {lines.map((l, i) => (
           <div key={i} className={`whitespace-pre-wrap break-words ${toneClass[l.tone ?? 'out']}`}>
             {l.tone === 'cmd' ? <CmdLine text={l.text} /> : l.text || '\u00a0'}
           </div>
         ))}
         <div className="flex items-center">
-          <span className="shrink-0 text-[#56d364]">{PROMPT}</span>
+          <span className="shrink-0 text-accent">{PROMPT}</span>
           <span className="relative ml-2 flex-1">
             <input
               ref={inputRef}
@@ -379,10 +379,39 @@ export default function TerminalApp() {
               autoComplete="off"
               autoCorrect="off"
               aria-label="Terminal input"
-              className="w-full bg-transparent text-white caret-[#8ab4ff] outline-none"
+              className="w-full bg-transparent text-ink caret-accent outline-none"
             />
           </span>
         </div>
+      </div>
+
+      {/* Quick commands: one tap runs them (handy on touch screens) */}
+      <div className="scrollbar-none flex shrink-0 items-center gap-1.5 overflow-x-auto border-t border-line px-3 py-2">
+        <span className="pr-1 text-[10px] uppercase tracking-[0.16em] text-ink-faint">Run</span>
+        {['help', 'neofetch', 'projects', 'skills', 'certifications', 'contact', 'clear'].map((c) => (
+          <button
+            key={c}
+            type="button"
+            onClick={() => {
+              run(c);
+              inputRef.current?.focus({ preventScroll: true });
+            }}
+            className="press ripple-host shrink-0 rounded-[4px] px-2 py-1 text-[11px] text-ink-muted shadow-[inset_0_0_0_1px_rgb(var(--ink)/0.14)] transition-[color,box-shadow] hover:text-accent hover:shadow-[inset_0_0_0_1px_rgb(var(--accent)/0.6)]"
+          >
+            {c}
+          </button>
+        ))}
+      </div>
+
+      {/* tmux-style status line */}
+      <div className="flex h-7 shrink-0 items-stretch text-[10.5px] uppercase tracking-[0.12em]">
+        <span className="flex items-center bg-accent px-3 font-semibold text-[#170a03]">zsh</span>
+        <span className="flex items-center bg-surface-raised px-3 text-ink-muted">~/portfolio</span>
+        <span className="flex flex-1 items-center px-3 text-ink-faint">{history.length} cmd{history.length === 1 ? '' : 's'}</span>
+        <span className="flex items-center gap-1.5 px-3 text-ok">
+          <span className="h-1.5 w-1.5 animate-pulse2 rounded-full bg-ok" />
+          online
+        </span>
       </div>
     </div>
   );
@@ -392,8 +421,8 @@ function CmdLine({ text }: { text: string }) {
   const rest = text.slice(PROMPT.length);
   return (
     <>
-      <span className="text-[#56d364]">{PROMPT}</span>
-      <span className="text-white">{rest}</span>
+      <span className="text-accent">{PROMPT}</span>
+      <span className="text-ink">{rest}</span>
     </>
   );
 }

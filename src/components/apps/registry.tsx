@@ -1,5 +1,17 @@
 import type { ComponentType } from 'react';
-import { Award, BriefcaseBusiness, Cpu, FileText, FolderCode, Mail, NotebookText, SquareTerminal, User, Users, type LucideIcon } from 'lucide-react';
+import {
+  Briefcase,
+  Certificate,
+  Cpu,
+  EnvelopeSimple,
+  FileText,
+  FolderSimple,
+  Notebook,
+  TerminalWindow,
+  User,
+  UsersThree,
+  type Icon,
+} from '@phosphor-icons/react';
 import type { AppId, AppParams } from '@/components/os/OSContext';
 import AboutApp from './AboutApp';
 import CertificationsApp from './CertificationsApp';
@@ -22,11 +34,11 @@ export interface AppDef {
   name: string;
   /** Title shown in the window chrome. */
   title: string;
-  icon: LucideIcon;
-  /** Icon gradient [top, bottom]. */
-  tint: readonly [string, string];
-  /** Symbol color, when not white. */
-  glyph?: string;
+  icon: Icon;
+  /** Two-digit index shown in the launcher, headers and window chrome. */
+  index: string;
+  /** One-line description for the desktop index. */
+  blurb: string;
   size: { w: number; h: number };
   /** Content manages its own padding/scrolling (terminal, PDF viewer). */
   bare?: boolean;
@@ -40,7 +52,8 @@ export const APPS: AppDef[] = [
     name: 'About Me',
     title: 'About Me',
     icon: User,
-    tint: ['#9ab9ff', '#3d6df0'],
+    index: '01',
+    blurb: 'Who I am, education and languages',
     size: { w: 760, h: 640 },
     keywords: 'profile bio who intro education languages',
     component: AboutApp,
@@ -49,8 +62,9 @@ export const APPS: AppDef[] = [
     id: 'projects',
     name: 'Projects',
     title: 'Projects',
-    icon: FolderCode,
-    tint: ['#ffd38c', '#ef8f2c'],
+    icon: FolderSimple,
+    index: '02',
+    blurb: 'Platforms and products I have shipped',
     size: { w: 900, h: 660 },
     keywords: 'work portfolio github code repos',
     component: ProjectsApp,
@@ -60,7 +74,8 @@ export const APPS: AppDef[] = [
     name: 'Skills',
     title: 'Skills',
     icon: Cpu,
-    tint: ['#c9aaff', '#7445ee'],
+    index: '03',
+    blurb: 'The stack I build and operate with',
     size: { w: 880, h: 640 },
     keywords: 'stack technologies tools languages kubernetes docker',
     component: SkillsApp,
@@ -69,8 +84,9 @@ export const APPS: AppDef[] = [
     id: 'experience',
     name: 'Experience',
     title: 'Experience',
-    icon: BriefcaseBusiness,
-    tint: ['#92e3bb', '#2f9466'],
+    icon: Briefcase,
+    index: '04',
+    blurb: 'Internships and roles',
     size: { w: 780, h: 640 },
     keywords: 'work internships jobs career leadership',
     component: ExperienceApp,
@@ -79,8 +95,9 @@ export const APPS: AppDef[] = [
     id: 'community',
     name: 'Community',
     title: 'Community',
-    icon: Users,
-    tint: ['#ffb398', '#de5c45'],
+    icon: UsersThree,
+    index: '05',
+    blurb: 'Volunteering and student life',
     size: { w: 820, h: 680 },
     keywords: 'volunteering volunteer benevolat bénévolat sports club ecdh community leadership',
     component: CommunityApp,
@@ -89,8 +106,9 @@ export const APPS: AppDef[] = [
     id: 'journal',
     name: 'Journal',
     title: 'Journal',
-    icon: NotebookText,
-    tint: ['#aab2ff', '#5548dc'],
+    icon: Notebook,
+    index: '06',
+    blurb: 'Open source, wins and milestones',
     size: { w: 780, h: 700 },
     keywords: 'posts contributions open source achievements awards hackathon milestones news blog',
     component: JournalApp,
@@ -99,8 +117,9 @@ export const APPS: AppDef[] = [
     id: 'certifications',
     name: 'Certifications',
     title: 'Certifications',
-    icon: Award,
-    tint: ['#ffb6d3', '#d4477c'],
+    icon: Certificate,
+    index: '07',
+    blurb: 'Verified industry credentials',
     size: { w: 880, h: 600 },
     keywords: 'certs badges credly kcna oracle docker',
     component: CertificationsApp,
@@ -109,8 +128,9 @@ export const APPS: AppDef[] = [
     id: 'contact',
     name: 'Contact',
     title: 'Contact',
-    icon: Mail,
-    tint: ['#a6dcff', '#2f7de4'],
+    icon: EnvelopeSimple,
+    index: '08',
+    blurb: 'Write to me directly',
     size: { w: 880, h: 640 },
     keywords: 'email message hire reach phone linkedin',
     component: ContactApp,
@@ -119,9 +139,9 @@ export const APPS: AppDef[] = [
     id: 'terminal',
     name: 'Terminal',
     title: 'mohammed — zsh',
-    icon: SquareTerminal,
-    tint: ['#6a6a72', '#1b1b1f'],
-    glyph: '#5be08b',
+    icon: TerminalWindow,
+    index: '09',
+    blurb: 'Explore everything from a shell',
     size: { w: 720, h: 480 },
     bare: true,
     keywords: 'shell cli console command',
@@ -132,9 +152,9 @@ export const APPS: AppDef[] = [
     name: 'Résumé',
     title: 'Résumé',
     icon: FileText,
-    tint: ['#ffffff', '#dedee3'],
-    glyph: '#ee4b3e',
-    size: { w: 760, h: 820 },
+    index: '10',
+    blurb: 'English and French PDFs',
+    size: { w: 940, h: 820 },
     bare: true,
     keywords: 'cv resume pdf download',
     component: ResumeApp,

@@ -1,19 +1,21 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { animate, motion, useAnimate, useDragControls, useIsPresent, useMotionValue } from 'framer-motion';
-import { Maximize2, Minimize2, Minus, X } from 'lucide-react';
-import AppIcon from '@/components/ui/AppIcon';
-import type { AppDef } from '@/components/apps/registry';
+import { animate, AnimatePresence, motion, useAnimate, useDragControls, useIsPresent, useMotionValue, useScroll, useSpring } from 'framer-motion';
+import { ArrowRight, CornersIn, CornersOut, Minus, X } from '@phosphor-icons/react';
+import { APPS, type AppDef } from '@/components/apps/registry';
+import { ScrollRootContext } from '@/components/ui/Section';
 import { useOS, type WinState } from './OSContext';
 
-export const MENU_H = 28;
-const DOCK_SPACE = 96;
-const MOBILE_DOCK_SPACE = 84;
-const MIN_W = 380;
-const MIN_H = 280;
+/** Height of the top status bar. */
+export const MENU_H = 40;
+/** Width of the launcher rail on wide screens. */
+export const RAIL_W = 72;
+const MOBILE_TAB_SPACE = 76;
+const MIN_W = 400;
+const MIN_H = 300;
 const SPRING = { type: 'spring', stiffness: 420, damping: 40, mass: 0.9 } as const;
-const EASE = [0.32, 0.72, 0, 1] as const;
+const EASE = [0.22, 1, 0.36, 1] as const;
 
 interface Geometry {
   x: number;
@@ -31,16 +33,17 @@ interface WindowProps {
 }
 
 function initialGeometry(def: AppDef, slot: number, vp: { w: number; h: number }): Geometry {
-  const w = Math.min(def.size.w, vp.w - 32);
-  const h = Math.min(def.size.h, vp.h - MENU_H - DOCK_SPACE - 20);
+  const left = RAIL_W + 24;
+  const w = Math.min(def.size.w, vp.w - left - 24);
+  const h = Math.min(def.size.h, vp.h - MENU_H - 48);
   const cascade = (slot % 6) * 28;
-  const x = Math.round(Math.min(Math.max(16, (vp.w - w) / 2 - 70 + cascade), vp.w - w - 16));
-  const y = Math.round(Math.max(MENU_H + 14, MENU_H + (vp.h - MENU_H - DOCK_SPACE - h) / 2 - 20 + cascade));
+  const x = Math.round(Math.min(Math.max(left, left + (vp.w - left - w) / 2 - 60 + cascade), vp.w - w - 16));
+  const y = Math.round(Math.max(MENU_H + 20, MENU_H + (vp.h - MENU_H - h) / 2 - 10 + cascade));
   return { x, y, w, h };
 }
 
 function clampGeometry(g: Geometry, vp: { w: number; h: number }): Geometry {
-  const w = Math.min(Math.max(g.w, MIN_W), vp.w - 16);
+  const w = Math.min(Math.max(g.w, MIN_W), vp.w - RAIL_W - 16);
   const h = Math.min(Math.max(g.h, MIN_H), vp.h - MENU_H - 16);
   const x = Math.min(Math.max(g.x, -w + 120), vp.w - 120);
   const y = Math.min(Math.max(g.y, MENU_H), vp.h - 60);
@@ -48,10 +51,15 @@ function clampGeometry(g: Geometry, vp: { w: number; h: number }): Geometry {
 }
 
 export default function Window({ win, def, focused, viewport, mobile }: WindowProps) {
-  const { close, focus, minimize, toggleMaximize } = useOS();
+  const { close, focus, minimize, toggleMaximize, open } = useOS();
   const dragControls = useDragControls();
   const present = useIsPresent();
   const [scope, animateInner] = useAnimate<HTMLDivElement>();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [scrolled, setScrolled] = useState(false);
+  // Bare apps (terminal, PDF viewer) scroll themselves, so only track the shared container.
+  const { scrollYProgress } = useScroll(def.bare ? {} : { container: scrollRef });
+  const progress = useSpring(scrollYProgress, { stiffness: 260, damping: 40 });
 
   const [initial] = useState(() => initialGeometry(def, win.slot, viewport));
   const saved = useRef<Geometry>(initial);
@@ -68,21 +76,27 @@ export default function Window({ win, def, focused, viewport, mobile }: WindowPr
       saved.current = { x: x.get(), y: y.get(), w: w.get(), h: h.get() };
     }
     wasZoomed.current = zoomed;
-    const target: Geometry = zoomed
-      ? { x: 0, y: MENU_H, w: viewport.w, h: viewport.h - MENU_H - (mobile ? MOBILE_DOCK_SPACE : 0) }
-      : clampGeometry(saved.current, viewport);
+    const target: Geometry = mobile
+      ? { x: 0, y: MENU_H, w: viewport.w, h: viewport.h - MENU_H - MOBILE_TAB_SPACE }
+      : zoomed
+        ? { x: RAIL_W, y: MENU_H, w: viewport.w - RAIL_W, h: viewport.h - MENU_H }
+        : clampGeometry(saved.current, viewport);
     const controls = [animate(x, target.x, SPRING), animate(y, target.y, SPRING), animate(w, target.w, SPRING), animate(h, target.h, SPRING)];
     return () => controls.forEach((c) => c.stop());
   }, [zoomed, mobile, viewport, x, y, w, h]);
 
-  // Minimize: shrink the window into its dock icon (and back out on restore).
+  // Open (page transition in), minimise into the launcher tile, restore.
   const firstRun = useRef(true);
   useEffect(() => {
     const el = scope.current;
     if (!el) return;
     if (firstRun.current) {
       firstRun.current = false;
-      animateInner(el, { opacity: [0, 1], scale: [0.92, 1], y: [14, 0] }, { duration: 0.38, ease: EASE });
+      if (mobile) {
+        animateInner(el, { opacity: [0, 1], y: [60, 0] }, { duration: 0.5, ease: EASE });
+      } else {
+        animateInner(el, { opacity: [0, 1], scale: [0.94, 1], y: [18, 0] }, { type: 'spring', stiffness: 380, damping: 32 });
+      }
       return;
     }
     if (win.minimized) {
@@ -90,7 +104,7 @@ export default function Window({ win, def, focused, viewport, mobile }: WindowPr
       const frame = el.getBoundingClientRect();
       const dx = icon ? icon.left + icon.width / 2 - (frame.left + frame.width / 2) : 0;
       const dy = icon ? icon.top + icon.height / 2 - (frame.top + frame.height / 2) : viewport.h;
-      animateInner(el, { x: dx, y: dy, scale: 0.08, opacity: 0 }, { duration: 0.45, ease: [0.6, 0, 0.4, 1] });
+      animateInner(el, { x: dx, y: dy, scale: 0.06, opacity: 0 }, { duration: 0.45, ease: [0.6, 0, 0.4, 1] });
     } else {
       animateInner(el, { x: 0, y: 0, scale: 1, opacity: 1 }, { duration: 0.45, ease: EASE });
     }
@@ -106,7 +120,6 @@ export default function Window({ win, def, focused, viewport, mobile }: WindowPr
     saved.current = { x: x.get(), y: y.get(), w: w.get(), h: h.get() };
   };
 
-  // Edge / corner resizing.
   const startResize = (e: React.PointerEvent, dir: 'r' | 'b' | 'rb') => {
     e.preventDefault();
     e.stopPropagation();
@@ -128,6 +141,8 @@ export default function Window({ win, def, focused, viewport, mobile }: WindowPr
   };
 
   const Content = def.component;
+  const Icon = def.icon;
+  const nextApp = APPS[(APPS.findIndex((a) => a.id === def.id) + 1) % APPS.length];
 
   return (
     <motion.section
@@ -142,66 +157,115 @@ export default function Window({ win, def, focused, viewport, mobile }: WindowPr
       dragConstraints={{ left: -w.get() + 120, right: viewport.w - 120, top: MENU_H, bottom: viewport.h - 60 }}
       onDragEnd={onDragEnd}
       onPointerDownCapture={() => focus(win.id)}
-      exit={{ opacity: 0, scale: 0.94, transition: { duration: 0.2, ease: EASE } }}
+      exit={mobile ? { opacity: 0, y: 40, transition: { duration: 0.25, ease: EASE } } : { opacity: 0, scale: 0.95, y: 8, transition: { duration: 0.2, ease: EASE } }}
       className="fixed left-0 top-0 will-change-transform"
       style={{ x, y, width: w, height: h, zIndex: win.z, pointerEvents: win.minimized || !present ? 'none' : 'auto' }}
     >
       <div
         ref={scope}
-        className={`material-thick relative flex h-full flex-col overflow-hidden transition-[border-radius,box-shadow] duration-300 ${
-          zoomed ? 'rounded-none' : 'rounded-[14px]'
+        className={`relative flex h-full flex-col overflow-hidden bg-surface transition-[border-radius,box-shadow] duration-500 ${
+          zoomed ? 'rounded-none' : 'rounded-win'
         } ${focused ? 'shadow-window' : 'shadow-window-inactive'}`}
         style={{ transformOrigin: '50% 50%' }}
       >
-        {/* Title bar */}
+        {/* Hairline frame; lights up in the accent when focused */}
+        <span
+          aria-hidden
+          className={`pointer-events-none absolute inset-0 z-30 rounded-[inherit] transition-shadow duration-500 ${
+            focused ? 'shadow-[inset_0_0_0_1px_rgb(var(--ink)/0.16)]' : 'shadow-[inset_0_0_0_1px_rgb(var(--ink)/0.08)]'
+          }`}
+        />
+
+        {/* Title bar: index + name on the left, square controls on the right. Condenses on scroll. */}
         <div
           onPointerDown={onTitlePointerDown}
           onDoubleClick={(e) => {
             if (!mobile && !(e.target as HTMLElement).closest('button')) toggleMaximize(win.id);
           }}
-          className={`relative flex h-11 shrink-0 select-none items-center border-b border-white/[0.06] px-4 ${
+          className={`relative z-20 flex h-11 shrink-0 select-none items-center gap-3 px-3 transition-[background-color,border-color] duration-300 ${
             zoomed ? '' : 'cursor-grab active:cursor-grabbing'
-          } ${focused ? 'bg-white/[0.035]' : 'bg-transparent'}`}
+          } ${scrolled ? 'border-b border-line-strong bg-surface-raised' : 'border-b border-line bg-surface'}`}
         >
-          <div className="group/lights relative z-10 flex items-center gap-2">
-            <Light color="#ff5f57" active={focused} label={`Close ${def.name}`} onClick={() => close(win.id)}>
-              <X strokeWidth={3} />
-            </Light>
-            <Light color="#febc2e" active={focused} label={`Minimize ${def.name}`} onClick={() => minimize(win.id)}>
-              <Minus strokeWidth={3} />
-            </Light>
-            {!mobile && (
-              <Light
-                color="#28c840"
-                active={focused}
-                label={win.maximized ? `Restore ${def.name}` : `Zoom ${def.name}`}
-                onClick={() => toggleMaximize(win.id)}
+          <span className={`flex h-6 w-6 items-center justify-center rounded-[5px] transition-colors ${focused ? 'bg-accent text-[#170a03]' : 'bg-white/[0.06] text-ink-faint'}`}>
+            <Icon size={14} weight="bold" />
+          </span>
+          <span className={`font-mono text-[11px] tracking-[0.12em] transition-colors ${focused ? 'text-ink-muted' : 'text-ink-faint'}`}>
+            {def.index} / {def.name.toUpperCase()}
+          </span>
+          <AnimatePresence>
+            {scrolled && !def.bare && (
+              <motion.span
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 6 }}
+                transition={{ duration: 0.25, ease: EASE }}
+                className="display hidden truncate text-[17px] leading-none text-ink sm:block"
               >
-                {win.maximized ? <Minimize2 strokeWidth={3} /> : <Maximize2 strokeWidth={3} />}
-              </Light>
+                {def.title}
+              </motion.span>
             )}
+          </AnimatePresence>
+
+          <div className="ml-auto flex items-center gap-1">
+            <ChromeButton label={`Minimize ${def.name}`} onClick={() => minimize(win.id)}>
+              <Minus size={14} weight="bold" />
+            </ChromeButton>
+            {!mobile && (
+              <ChromeButton label={win.maximized ? `Restore ${def.name}` : `Zoom ${def.name}`} onClick={() => toggleMaximize(win.id)}>
+                {win.maximized ? <CornersIn size={14} weight="bold" /> : <CornersOut size={14} weight="bold" />}
+              </ChromeButton>
+            )}
+            <ChromeButton label={`Close ${def.name}`} onClick={() => close(win.id)} danger>
+              <X size={14} weight="bold" />
+            </ChromeButton>
           </div>
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center gap-2 px-24">
-            <AppIcon icon={def.icon} tint={def.tint} glyph={def.glyph} size={16} />
-            <span className={`truncate text-[13px] font-medium transition-colors ${focused ? 'text-ink/85' : 'text-ink/40'}`}>
-              {def.title}
-            </span>
-          </div>
+
+          {/* Reading progress */}
+          {!def.bare && (
+            <motion.span aria-hidden className="absolute inset-x-0 -bottom-px h-[2px] origin-left bg-accent" style={{ scaleX: progress }} />
+          )}
         </div>
 
-        {/* Content */}
         {def.bare ? (
           <div className="min-h-0 flex-1">
             <Content params={win.params} paramsKey={win.paramsKey} />
           </div>
         ) : (
-          <div className="scrollbar-mac min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-8 pt-6 sm:px-8 sm:pt-8">
-            <Content params={win.params} paramsKey={win.paramsKey} />
+          <div
+            ref={scrollRef}
+            onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 48)}
+            className="scrollbar-mac smooth-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain"
+          >
+            <ScrollRootContext.Provider value={scrollRef}>
+              <div className="px-5 pb-6 pt-8 sm:px-10 sm:pt-10">
+                <Content params={win.params} paramsKey={win.paramsKey} />
+              </div>
+              {/* Footer: page end + jump to the next app */}
+              <footer className="mt-6 border-t border-line px-5 py-5 sm:px-10">
+                <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3">
+                  <p className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-ink-faint">
+                    End of {def.index} · {def.name}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => open(nextApp.id)}
+                    className="press ripple-host group flex items-center gap-3 rounded-ctl px-3 py-2 text-left hover:bg-white/[0.04]"
+                  >
+                    <span className="text-right">
+                      <span className="block font-mono text-[10px] uppercase tracking-[0.16em] text-ink-faint">Next · {nextApp.index}</span>
+                      <span className="display block text-xl leading-tight text-ink">{nextApp.name}</span>
+                    </span>
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full border border-line-strong text-ink-muted transition-all duration-300 group-hover:border-accent group-hover:bg-accent group-hover:text-[#170a03]">
+                      <ArrowRight size={16} weight="bold" className="transition-transform duration-300 group-hover:translate-x-0.5" />
+                    </span>
+                  </button>
+                </div>
+              </footer>
+            </ScrollRootContext.Provider>
           </div>
         )}
       </div>
 
-      {/* Resize handles live outside the rounded clip so the corner stays grabbable. */}
       {!zoomed && (
         <>
           <div onPointerDown={(e) => startResize(e, 'r')} className="absolute -right-1 bottom-4 top-11 w-2 cursor-ew-resize" />
@@ -213,19 +277,7 @@ export default function Window({ win, def, focused, viewport, mobile }: WindowPr
   );
 }
 
-function Light({
-  color,
-  active,
-  label,
-  onClick,
-  children,
-}: {
-  color: string;
-  active: boolean;
-  label: string;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
+function ChromeButton({ label, onClick, danger, children }: { label: string; onClick: () => void; danger?: boolean; children: React.ReactNode }) {
   return (
     <button
       type="button"
@@ -235,12 +287,9 @@ function Light({
         e.stopPropagation();
         onClick();
       }}
-      className="flex h-3 w-3 items-center justify-center rounded-full text-black/60 transition-[background-color,transform] duration-150 active:scale-90 group-hover/lights:!bg-[var(--c)] [&>svg]:h-2 [&>svg]:w-2 [&>svg]:opacity-0 group-hover/lights:[&>svg]:opacity-100"
-      style={{
-        ['--c' as string]: color,
-        backgroundColor: active ? color : 'rgb(255 255 255 / 0.16)',
-        boxShadow: 'inset 0 0 0 0.5px rgb(0 0 0 / 0.25)',
-      }}
+      className={`press flex h-7 w-7 items-center justify-center rounded-[5px] text-ink-faint transition-colors hover:text-ink ${
+        danger ? 'hover:bg-bad hover:!text-[#1a0503]' : 'hover:bg-white/[0.08]'
+      }`}
     >
       {children}
     </button>

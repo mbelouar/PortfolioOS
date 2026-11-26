@@ -1,7 +1,7 @@
 'use client';
 
 import { AnimatePresence, motion, useIsPresent } from 'framer-motion';
-import { X } from 'lucide-react';
+import { Keyboard, X } from '@phosphor-icons/react';
 import { useIsMac } from '@/lib/hooks';
 
 export default function ShortcutsSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -49,24 +49,25 @@ export default function ShortcutsSheet({ open, onClose }: { open: boolean; onClo
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97 }}
             transition={{ type: 'spring', stiffness: 460, damping: 34 }}
-            className="material-thick relative w-full max-w-[560px] rounded-2xl p-6 shadow-popover"
+            className="relative w-full max-w-[600px] rounded-win bg-surface p-7 shadow-popover"
           >
-            <button onClick={onClose} aria-label="Close" className="absolute right-4 top-4 rounded-full p-1.5 text-ink-faint hover:bg-white/10 hover:text-ink">
-              <X className="h-4 w-4" />
+            <button onClick={onClose} aria-label="Close" className="btn-icon absolute right-5 top-5 !h-8 !w-8">
+              <X size={14} weight="bold" />
             </button>
-            <h2 className="text-lg font-semibold">Keyboard shortcuts</h2>
-            <p className="mt-1 text-sm text-ink-faint">Get around without lifting your hands.</p>
-            <div className="mt-5 grid gap-6 sm:grid-cols-2">
+            <p className="flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.18em] text-accent"><Keyboard size={14} /> Reference</p>
+            <h2 className="display mt-2 text-[40px] leading-none">Keyboard shortcuts</h2>
+            <p className="mt-2 text-sm text-ink-muted">Get around without lifting your hands.</p>
+            <div className="mt-7 grid gap-7 sm:grid-cols-2">
               {groups.map((g) => (
                 <div key={g.title} className={g.title === 'Terminal' ? 'sm:col-span-2' : ''}>
-                  <p className="eyebrow mb-2">{g.title}</p>
+                  <p className="eyebrow mb-3 border-b border-line pb-2">{g.title}</p>
                   <ul className="space-y-2">
                     {g.items.map(([keys, label]) => (
                       <li key={label} className="flex items-center justify-between gap-3 text-[13px]">
                         <span className="text-ink-muted">{label}</span>
                         <span className="flex gap-1">
                           {keys.map((k) => (
-                            <kbd key={k} className="min-w-[22px] rounded-md bg-white/[0.08] px-1.5 py-0.5 text-center font-sans text-[11px] text-ink ring-1 ring-white/10">
+                            <kbd key={k}>
                               {k}
                             </kbd>
                           ))}
@@ -91,7 +92,7 @@ function Overlay({ onClose, children }: { onClose: () => void; children: React.R
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[9800] flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-[9800] flex items-center justify-center bg-base/75 p-4"
       style={{ pointerEvents: present ? 'auto' : 'none' }}
       onPointerDown={(e) => e.target === e.currentTarget && onClose()}
     >
