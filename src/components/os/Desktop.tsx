@@ -54,7 +54,7 @@ export default function Desktop() {
     <MotionConfig reducedMotion="user">
       <IconContext.Provider value={{ weight: 'regular', size: 16, mirrored: false }}>
         <OSProvider onLock={lock}>
-          <Wallpaper />
+          <Wallpaper locked={locked !== false} />
           {locked === false && <Shell />}
           <AnimatePresence>{locked && <LockScreen onUnlock={unlock} />}</AnimatePresence>
         </OSProvider>
@@ -63,7 +63,7 @@ export default function Desktop() {
   );
 }
 
-function Wallpaper() {
+function Wallpaper({ locked }: { locked: boolean }) {
   const coarse = useCoarsePointer();
   const reduced = useReducedMotion();
   const mx = useMotionValue(0);
@@ -88,7 +88,7 @@ function Wallpaper() {
       <motion.div className="absolute -inset-8" style={{ x, y }}>
         <Backdrop />
       </motion.div>
-      <RegistrationMarks />
+      {!locked && <RegistrationMarks />}
     </div>
   );
 }
