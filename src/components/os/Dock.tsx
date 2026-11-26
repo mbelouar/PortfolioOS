@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useAnimationControls } from 'framer-motion';
 import { Power, type Icon } from '@phosphor-icons/react';
 import { APPS, type AppDef } from '@/components/apps/registry';
@@ -62,7 +63,7 @@ export default function Dock({ mobile }: { mobile: boolean }) {
       transition={{ duration: 0.7, delay: 0.15, ease: EASE }}
       className="fixed bottom-0 left-0 top-[var(--bar-h)] z-[9000] flex w-[var(--rail-w)] flex-col items-center border-r border-line bg-surface/90 py-3 backdrop-blur-md"
     >
-      <div className="scrollbar-none flex flex-1 flex-col items-center gap-1.5 overflow-y-auto">
+      <div className="scrollbar-none flex w-full flex-1 flex-col items-center gap-1.5 overflow-y-auto py-1.5">
         {APPS.map((app, i) => (
           <RailItem
             key={app.id}
@@ -103,7 +104,16 @@ interface RailItemProps {
 
 function RailItem({ id, label, index, icon, delay, running, active, bounceKey = 0, href, onClick }: RailItemProps) {
   const [hover, setHover] = useState(false);
+  const [tipY, setTipY] = useState(0);
+  const ref = useRef<HTMLElement>(null);
   const pop = useAnimationControls();
+  // The app list scrolls, which would clip an absolutely positioned tooltip, so it is portalled
+  // to <body> and placed from the tile's on-screen position.
+  const show = () => {
+    const r = ref.current?.getBoundingClientRect();
+    if (r) setTipY(r.top + r.height / 2);
+    setHover(true);
+  };
 
   useEffect(() => {
     if (bounceKey > 0) pop.start({ x: [0, 6, -2, 0], transition: { duration: 0.6, ease: 'easeOut' } });
@@ -129,12 +139,14 @@ function RailItem({ id, label, index, icon, delay, running, active, bounceKey = 
       <Tag
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         {...(linkProps as any)}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ref={ref as any}
         data-dock-id={id}
         aria-label={label}
         animate={pop}
-        onHoverStart={() => setHover(true)}
+        onHoverStart={show}
         onHoverEnd={() => setHover(false)}
-        onFocus={() => setHover(true)}
+        onFocus={show}
         onBlur={() => setHover(false)}
         whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.9 }}
@@ -143,20 +155,25 @@ function RailItem({ id, label, index, icon, delay, running, active, bounceKey = 
       >
         <AppIcon icon={icon} size={44} active={active} />
       </Tag>
-      <AnimatePresence>
-        {hover && (
-          <motion.span
-            initial={{ opacity: 0, x: -6 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -4 }}
-            transition={{ duration: 0.16, ease: EASE }}
-            className="pointer-events-none absolute left-[56px] top-1/2 z-10 flex -translate-y-1/2 items-center gap-2 whitespace-nowrap rounded-ctl bg-surface-raised px-2.5 py-1.5 text-[12px] text-ink shadow-popover"
-          >
-            <span className="font-mono text-[10px] text-accent">{index}</span>
-            {label}
-          </motion.span>
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <AnimatePresence>
+            {hover && (
+              <motion.span
+                initial={{ opacity: 0, x: -6, y: '-50%' }}
+                animate={{ opacity: 1, x: 0, y: '-50%' }}
+                exit={{ opacity: 0, x: -4, y: '-50%' }}
+                transition={{ duration: 0.16, ease: EASE }}
+                style={{ top: tipY }}
+                className="pointer-events-none fixed left-[calc(var(--rail-w)+10px)] z-[9600] flex items-center gap-2 whitespace-nowrap rounded-ctl bg-surface-raised px-2.5 py-1.5 text-[12px] text-ink shadow-popover"
+              >
+                <span className="font-mono text-[10px] text-accent">{index}</span>
+                {label}
+              </motion.span>
+            )}
+          </AnimatePresence>,
+          document.body,
         )}
-      </AnimatePresence>
     </motion.div>
   );
 }
